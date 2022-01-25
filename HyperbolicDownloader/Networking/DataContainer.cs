@@ -1,4 +1,4 @@
-﻿namespace HyperbolicDowloader
+﻿namespace HyperbolicDownloader
 {
     internal class DataContainer
     {

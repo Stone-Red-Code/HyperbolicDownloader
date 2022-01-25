@@ -1,5 +1,5 @@
 ﻿
-using HyperbolicDowloader.Networking;
+using HyperbolicDownloader.Networking;
 
 using Open.Nat;
 
@@ -10,7 +10,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 
-namespace HyperbolicDowloader;
+namespace HyperbolicDownloader;
 
 internal class Program
 {

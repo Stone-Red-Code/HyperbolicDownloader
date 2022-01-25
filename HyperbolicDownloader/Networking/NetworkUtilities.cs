@@ -2,7 +2,7 @@
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace HyperbolicDowloader.Networking;
+namespace HyperbolicDownloader.Networking;
 
 internal class NetworkUtilities
 {

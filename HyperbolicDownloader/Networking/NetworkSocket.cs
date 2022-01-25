@@ -1,4 +1,4 @@
-﻿namespace HyperbolicDowloader.Networking;
+﻿namespace HyperbolicDownloader.Networking;
 
 internal class NetworkSocket
 {

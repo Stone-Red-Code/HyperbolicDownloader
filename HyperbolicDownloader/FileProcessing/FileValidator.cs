@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace HyperbolicDowloader.FileProcessing;
+namespace HyperbolicDownloader.FileProcessing;
 
 internal class FileValidator
 {

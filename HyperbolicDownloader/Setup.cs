@@ -1,11 +1,11 @@
-﻿using HyperbolicDowloader.Networking;
+﻿using HyperbolicDownloader.Networking;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 
 using System.Net;
 using System.Net.Sockets;
 
-namespace HyperbolicDowloader;
+namespace HyperbolicDownloader;
 
 internal static class Setup
 {

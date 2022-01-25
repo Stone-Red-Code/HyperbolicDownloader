@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace HyperbolicDowloader.Networking;
+namespace HyperbolicDownloader.Networking;
 
 internal class BroadcastRecivedEventArgs : EventArgs
 {

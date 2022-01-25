@@ -1,11 +1,11 @@
-﻿using HyperbolicDowloader.Networking;
+﻿using HyperbolicDownloader.Networking;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 
 using System.Net.Sockets;
 using System.Text.Json;
 
-namespace HyperbolicDowloader;
+namespace HyperbolicDownloader;
 
 internal class HostsManager
 {

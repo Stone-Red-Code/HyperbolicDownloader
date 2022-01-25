@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 
-namespace HyperbolicDowloader.Networking;
+namespace HyperbolicDownloader.Networking;
 
 internal class BroadcastClient
 {

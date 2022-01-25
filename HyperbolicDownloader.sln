@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HyperbolicDowloader", "HyperbolicDowloader\HyperbolicDowloader.csproj", "{231393D8-DDBF-4F2F-90F3-BEB96903BE0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HyperbolicDownloader", "HyperbolicDownloader\HyperbolicDownloader.csproj", "{7BA90CAF-36A1-4D55-9CE2-E498ECC1B62D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{231393D8-DDBF-4F2F-90F3-BEB96903BE0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{231393D8-DDBF-4F2F-90F3-BEB96903BE0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{231393D8-DDBF-4F2F-90F3-BEB96903BE0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{231393D8-DDBF-4F2F-90F3-BEB96903BE0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BA90CAF-36A1-4D55-9CE2-E498ECC1B62D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BA90CAF-36A1-4D55-9CE2-E498ECC1B62D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BA90CAF-36A1-4D55-9CE2-E498ECC1B62D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BA90CAF-36A1-4D55-9CE2-E498ECC1B62D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
