@@ -194,7 +194,7 @@ internal class InputHandler
 
             if (!validIpAdress)
             {
-                hostsManager.Remove(host);
+                hostsManager.Remove(host, true);
                 continue;
             }
 
@@ -210,6 +210,7 @@ internal class InputHandler
             {
                 Console.CursorLeft = 0;
                 ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
+
                 hostsManager.Remove(host);
                 continue;
             }

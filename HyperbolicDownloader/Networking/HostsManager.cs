@@ -34,9 +34,12 @@ internal class HostsManager
         SaveHosts();
     }
 
-    public void Remove(NetworkSocket host)
+    public void Remove(NetworkSocket host, bool forceRemove = false)
     {
-        hosts.RemoveAll(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
+        if (DateTime.Now - host.LastActive >= new TimeSpan(24, 0, 0) || forceRemove)
+        {
+            hosts.RemoveAll(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
+        }
         SaveHosts();
     }
 
