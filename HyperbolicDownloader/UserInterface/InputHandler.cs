@@ -38,6 +38,8 @@ internal class InputHandler
         listCommand.Register(ListFiles, "files");
         listCommand.Register(ListHosts, "hosts");
 
+        commander.Register((_) => hostsManager.CheckHostsActivity(), "status", "check");
+
         this.filesManager = filesManager;
     }
 
@@ -180,7 +182,8 @@ internal class InputHandler
     {
         if (string.IsNullOrEmpty(hash))
         {
-            Console.WriteLine("No hash value specified!");
+            ConsoleExt.WriteLine("No hash value specified!", ConsoleColor.Red);
+            return;
         }
 
         hash = hash.Trim();
@@ -250,6 +253,7 @@ internal class InputHandler
                 }
 
                 string fileName = parts[1].ToFileName();
+                string filepath = $"./Downloads/{fileName}";
 
                 Console.WriteLine($"File name: {fileName}");
                 Console.WriteLine($"Starting download...");
@@ -261,7 +265,7 @@ internal class InputHandler
                     Directory.CreateDirectory("./Downloads");
                 }
 
-                using FileStream? fileStream = new FileStream($"./Downloads/{fileName}", FileMode.Create);
+                using FileStream? fileStream = new FileStream(filepath, FileMode.Create);
 
                 int bytesInOneSecond = 0;
                 int unitsPerSecond = 0;
@@ -321,12 +325,16 @@ internal class InputHandler
                 Console.WriteLine();
 
                 Console.WriteLine("Validating file...");
-                if (!FileValidator.ValidateHash($"./Downloads/{fileName}", hash))
+                if (FileValidator.ValidateHash(filepath, hash))
+                {
+                    _ = filesManager.TryAdd(filepath, out _, out _);
+                }
+                else
                 {
                     ConsoleExt.WriteLine("Warning: File hash does not match! File might me corrupted or manipulated!", ConsoleColor.DarkYellow);
                 }
 
-                Console.WriteLine($"File saved at: {Path.GetFullPath($"./Downloads/{fileName}")}");
+                Console.WriteLine($"File saved at: {Path.GetFullPath(filepath)}");
                 ConsoleExt.WriteLine("Done", ConsoleColor.Green);
                 stopWatch.Stop();
                 hostsManager.SaveHosts();
