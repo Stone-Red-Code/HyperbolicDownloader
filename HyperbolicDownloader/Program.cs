@@ -1,5 +1,7 @@
 ﻿
+using HyperbolicDownloader.FileProcessing;
 using HyperbolicDownloader.Networking;
+using HyperbolicDownloader.UserInterface;
 
 using Open.Nat;
 
@@ -15,15 +17,16 @@ namespace HyperbolicDownloader;
 internal class Program
 {
     private const int BroadcastPort = 2155;
-
     public const string HostsFilePath = "Hosts.json";
+    public const string FilesInfoPath = "Files.json";
 
     private static int publicPort;
     private static readonly int privatePort = 3055;
     private static NatDevice? device;
     private static Mapping? portMapping;
-    private static readonly HostsManager hosts = new();
-    private static readonly NetworkClient networkClient = new();
+    private static readonly HostsManager hostsManager = new();
+    private static readonly FilesManager filesManager = new FilesManager();
+    private static readonly NetworkClient networkClient = new(filesManager);
     private static readonly Random random = new Random();
 
     private static async Task Main()
@@ -33,7 +36,13 @@ internal class Program
         if (File.Exists(HostsFilePath))
         {
             string hostsJson = await File.ReadAllTextAsync(HostsFilePath);
-            hosts.AddRange(JsonSerializer.Deserialize<List<NetworkSocket>>(hostsJson) ?? new());
+            hostsManager.AddRange(JsonSerializer.Deserialize<List<NetworkSocket>>(hostsJson) ?? new());
+        }
+
+        if (File.Exists(FilesInfoPath))
+        {
+            string filesJson = await File.ReadAllTextAsync(FilesInfoPath);
+            filesManager.AddRange(JsonSerializer.Deserialize<List<HyperFileInfo>>(filesJson) ?? new());
         }
 
         Console.WriteLine("Searching for a UPnP/NAT-PMP device...");
@@ -48,6 +57,8 @@ internal class Program
         {
             networkClient.ListenTo<NetworkSocket>("GetHostsList", GetHostList);
             networkClient.ListenTo<List<NetworkSocket>>("DiscoverAnswer", DiscoverAnswer);
+            networkClient.ListenTo<string>("Message", ReciveMessage);
+            networkClient.ListenTo<string>("HasFile", HasFile);
             networkClient.StartListening(privatePort);
         }
         catch (SocketException ex)
@@ -62,31 +73,33 @@ internal class Program
         broadcastClient.Send(BroadcastPort, privatePort.ToString());
         await Task.Delay(5000);
 
-        if (hosts.Count > 0)
+        if (hostsManager.Count > 0)
         {
             Console.WriteLine("Checking if hosts are active...");
-            hosts.RemoveInactiveHosts();
+            hostsManager.RemoveInactiveHosts();
         }
 
-        if (hosts.Count == 0)
+        if (hostsManager.Count == 0)
         {
-            hosts.AddRange(await Setup.ConfigureHost());
+            hostsManager.AddRange(await UserInterface.Setup.ConfigureHost());
             Console.WriteLine("Checking if hosts are active...");
-            hosts.RemoveInactiveHosts();
+            hostsManager.RemoveInactiveHosts();
         }
 
-        Console.WriteLine($"{hosts.Count} active host(s).");
+        Console.WriteLine($"{hostsManager.Count} active host(s).");
         Console.WriteLine("Starting broadcast listener...");
         broadcastClient.StartListening(BroadcastPort);
         broadcastClient.OnBroadcastRecived += BroadcastClient_OnBroadcastRecived;
         ConsoleExt.WriteLine("Done", ConsoleColor.Green);
-        await Task.Delay(-1);
+
+        new InputHandler(hostsManager, filesManager).ReadInput();
+        ClosePorts();
     }
 
     private static async void BroadcastClient_OnBroadcastRecived(object? sender, BroadcastRecivedEventArgs recivedEventArgs)
     {
         Debug.WriteLine($"Received broadcast \"{recivedEventArgs.Message}\" from {recivedEventArgs.IPEndPoint.Address}");
-        List<NetworkSocket> hostsToSend = hosts.ToList();
+        List<NetworkSocket> hostsToSend = hostsManager.ToList();
 
         NetworkSocket? localSocket = GetLocalSocket();
 
@@ -102,7 +115,7 @@ internal class Program
 
         if (success)
         {
-            hosts.Add(new NetworkSocket(recivedEventArgs.IPEndPoint.Address.ToString(), remotePort));
+            hostsManager.Add(new NetworkSocket(recivedEventArgs.IPEndPoint.Address.ToString(), remotePort));
             try
             {
                 await NetworkClient.SendAsync(recivedEventArgs.IPEndPoint.Address, remotePort, "DiscoverAnswer", hostsToSend);
@@ -117,12 +130,17 @@ internal class Program
     private static void DiscoverAnswer(object? sender, MessageRecivedEventArgs<List<NetworkSocket>> recivedEventArgs)
     {
         Console.WriteLine($"Received answer from {recivedEventArgs.IpAddress}. Returned {recivedEventArgs.Data.Count} host(s).");
-        hosts.AddRange(recivedEventArgs.Data);
+        hostsManager.AddRange(recivedEventArgs.Data);
+    }
+
+    private static void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
+    {
+        Console.WriteLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.");
     }
 
     private static async void GetHostList(object? sender, MessageRecivedEventArgs<NetworkSocket> recivedEventArgs)
     {
-        List<NetworkSocket> hostsToSend = hosts.ToList();
+        List<NetworkSocket> hostsToSend = hostsManager.ToList();
 
         NetworkSocket? localSocket = GetLocalSocket();
 
@@ -136,10 +154,15 @@ internal class Program
 
         if (recivedEventArgs.Data.Port != 0)
         {
-            hosts.Add(recivedEventArgs.Data);
+            hostsManager.Add(recivedEventArgs.Data);
         }
 
         await recivedEventArgs.SendResponseAsync(hostsToSend);
+    }
+
+    private static async void HasFile(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
+    {
+        await recivedEventArgs.SendResponseAsync(filesManager.Contains(recivedEventArgs.Data));
     }
 
     public static async Task<bool> OpenPorts()

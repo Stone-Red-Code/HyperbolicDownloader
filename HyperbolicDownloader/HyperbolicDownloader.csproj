@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Console.Commander.NET" Version="1.0.0" />
     <PackageReference Include="Open.NAT" Version="2.1.0" />
     <PackageReference Include="Stone_Red-C-Sharp-Utilities" Version="1.0.3.1" />
   </ItemGroup>

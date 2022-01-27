@@ -5,7 +5,7 @@ using Stone_Red_Utilities.ConsoleExtentions;
 using System.Net;
 using System.Net.Sockets;
 
-namespace HyperbolicDownloader;
+namespace HyperbolicDownloader.UserInterface;
 
 internal static class Setup
 {

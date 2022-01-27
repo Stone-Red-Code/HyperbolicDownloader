@@ -1,19 +1,23 @@
-﻿using System.Net;
+﻿using HyperbolicDownloader.FileProcessing;
+
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-namespace HyperbolicDownloader
+namespace HyperbolicDownloader.Networking
 {
     internal class NetworkClient
     {
         public bool IsListening { get; private set; } = false;
 
         private TcpListener? tcpListener;
+        private FilesManager filesManager;
         private readonly Dictionary<string, (Type type, Delegate method)> events = new();
 
-        public NetworkClient()
+        public NetworkClient(FilesManager filesManager)
         {
+            this.filesManager = filesManager;
         }
 
         public static async Task<T?> SendAsync<T>(IPAddress remoteIp, int remotePort, string eventName, object data)
@@ -93,22 +97,28 @@ namespace HyperbolicDownloader
             tcpListener.Start();
             IsListening = true;
 
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 while (IsListening)
                 {
                     try
                     {
-                        using TcpClient client = tcpListener.AcceptTcpClient();
+                        TcpClient client = tcpListener.AcceptTcpClient();
                         NetworkStream nwStream = client.GetStream();
                         byte[] buffer = new byte[client.ReceiveBufferSize];
 
-                        int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
+                        int bytesRead = await nwStream.ReadAsync(buffer, 0, client.ReceiveBufferSize);
 
                         string dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
+                        if (dataReceived.StartsWith("Download"))
+                        {
+                            _ = Upload(client, dataReceived[8..]);
+                            continue;
+                        }
                         if (string.IsNullOrWhiteSpace(dataReceived))
                         {
+                            client.Close();
                             continue;
                         }
 
@@ -128,6 +138,8 @@ namespace HyperbolicDownloader
 
                             method?.DynamicInvoke(this, eventArgs);
                         }
+
+                        client.Close();
                     }
                     catch (SocketException ex)
                     {
@@ -139,6 +151,48 @@ namespace HyperbolicDownloader
                 }
                 tcpListener.Stop();
             });
+        }
+
+        private async Task Upload(TcpClient client, string hash)
+        {
+            byte[] bytesToSend;
+            hash = hash.Trim();
+            NetworkStream nwStream = client.GetStream();
+
+            if (filesManager.TryGet(hash, out HyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
+            {
+                if (hash != await FileValidator.CalculateHashAsync(hyperFileInfo.FilePath))
+                {
+                    bytesToSend = Encoding.ASCII.GetBytes("Hash does not match!");
+                    await nwStream.WriteAsync(bytesToSend);
+                    return;
+                }
+
+                //string compressedFilePath = $"{hash + DateTime.Now.Millisecond}.temp";
+
+                //FileCompressor.CompressFile(hyperFileInfo.FilePath, compressedFilePath);
+
+                FileInfo compressedFileInfo = new FileInfo(hyperFileInfo.FilePath);
+
+                bytesToSend = Encoding.ASCII.GetBytes(compressedFileInfo.Length.ToString());
+                await nwStream.WriteAsync(bytesToSend);
+
+                foreach (byte[]? chunk in FileCompressor.ReadChunks(hyperFileInfo.FilePath, 1000))
+                {
+                    if (chunk is not null)
+                    {
+                        await nwStream.WriteAsync(chunk);
+                    }
+                }
+
+                // File.Delete(compressedFilePath);
+            }
+            else
+            {
+                bytesToSend = Encoding.ASCII.GetBytes("File not found!");
+                await nwStream.WriteAsync(bytesToSend);
+            }
+            client.Close();
         }
 
         public void StopListening()

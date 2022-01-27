@@ -12,8 +12,18 @@ internal class FileValidator
         return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
     }
 
+    public static string CalculateHash(string filePath)
+    {
+        return CalculateHashAsync(filePath).GetAwaiter().GetResult();
+    }
+
     public static async Task<bool> ValidateHashAsync(string filePath, string hash)
     {
         return await CalculateHashAsync(filePath) == hash;
+    }
+
+    public static bool ValidateHash(string filePath, string hash)
+    {
+        return CalculateHash(filePath) == hash;
     }
 }
