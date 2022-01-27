@@ -15,9 +15,12 @@ internal class BroadcastClient
 
     private UdpClient? udpListener;
 
-    public void Send(int port, string message)
+    public static void Send(int port, string message)
     {
-        Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
+        {
+            EnableBroadcast = true
+        };
 
         IPAddress? ip4Address = NetworkUtilities.GetIP4Adress();
 
@@ -40,7 +43,7 @@ internal class BroadcastClient
         byte[] sendbuf = Encoding.ASCII.GetBytes(message);
         IPEndPoint ep = new IPEndPoint(broadcast, port);
 
-        s.SendTo(sendbuf, ep);
+        socket.SendTo(sendbuf, ep);
     }
 
     public void StartListening(int port)

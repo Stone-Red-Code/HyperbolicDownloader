@@ -25,13 +25,14 @@ internal class Program
     private static NatDevice? device;
     private static Mapping? portMapping;
     private static readonly HostsManager hostsManager = new();
-    private static readonly FilesManager filesManager = new FilesManager();
+    private static readonly FilesManager filesManager = new();
     private static readonly NetworkClient networkClient = new(filesManager);
-    private static readonly Random random = new Random();
+    private static readonly Random random = new();
 
     private static async Task Main()
     {
         Console.CancelKeyPress += Console_CancelKeyPress;
+        Console.CursorVisible = false;
 
         if (File.Exists(HostsFilePath))
         {
@@ -70,7 +71,7 @@ internal class Program
         BroadcastClient broadcastClient = new BroadcastClient();
 
         Console.WriteLine("Running local discovery routine...");
-        broadcastClient.Send(BroadcastPort, privatePort.ToString());
+        BroadcastClient.Send(BroadcastPort, privatePort.ToString());
         await Task.Delay(5000);
 
         if (hostsManager.Count > 0)
@@ -81,7 +82,7 @@ internal class Program
 
         if (hostsManager.Count == 0)
         {
-            hostsManager.AddRange(await UserInterface.Setup.ConfigureHost());
+            hostsManager.AddRange(await Setup.ConfigureHost());
             Console.WriteLine("Checking if hosts are active...");
             hostsManager.RemoveInactiveHosts();
         }

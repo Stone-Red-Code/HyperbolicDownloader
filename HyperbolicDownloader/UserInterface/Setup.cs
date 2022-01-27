@@ -15,11 +15,13 @@ internal static class Setup
         do
         {
             Console.WriteLine();
+            Console.CursorVisible = true;
             Console.Write("Please enter an IP address manually: ");
             string? ipAddressInput = Console.ReadLine();
 
             Console.Write("Please enter an port number manually: ");
             string? portInput = Console.ReadLine();
+            Console.CursorVisible = false;
 
             _ = int.TryParse(portInput, out int port);
             if (port < 1000 || port >= 6000)

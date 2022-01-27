@@ -158,7 +158,7 @@ namespace HyperbolicDownloader.Networking
             byte[] bytesToSend;
             hash = hash.Trim();
             NetworkStream nwStream = client.GetStream();
-
+            client.SendBufferSize = 64000;
             if (filesManager.TryGet(hash, out HyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
             {
                 if (hash != await FileValidator.CalculateHashAsync(hyperFileInfo.FilePath))
@@ -174,10 +174,10 @@ namespace HyperbolicDownloader.Networking
 
                 FileInfo compressedFileInfo = new FileInfo(hyperFileInfo.FilePath);
 
-                bytesToSend = Encoding.ASCII.GetBytes(compressedFileInfo.Length.ToString());
+                bytesToSend = Encoding.ASCII.GetBytes($"{compressedFileInfo.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}");
                 await nwStream.WriteAsync(bytesToSend);
 
-                foreach (byte[]? chunk in FileCompressor.ReadChunks(hyperFileInfo.FilePath, 1000))
+                foreach (byte[]? chunk in FileCompressor.ReadChunks(hyperFileInfo.FilePath, 64000))
                 {
                     if (chunk is not null)
                     {

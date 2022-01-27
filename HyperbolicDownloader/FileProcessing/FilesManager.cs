@@ -65,11 +65,11 @@ internal class FilesManager
 
     public bool TryRemove(string hash)
     {
-        files.RemoveAll(f => f.Hash == hash);
+        int count = files.RemoveAll(f => f.Hash == hash);
 
         SaveFiles();
 
-        return true;
+        return count > 0;
     }
 
     public bool Contains(string? hash)
