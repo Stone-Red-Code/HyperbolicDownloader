@@ -23,14 +23,20 @@ internal class InputHandler
     public InputHandler(HostsManager hostsManager, FilesManager filesManager)
     {
         this.hostsManager = hostsManager;
-        commander.Register((_) => Console.Clear(), "clear");
-        commander.Register(Exit, "exit");
+        commander.Register((_) => Console.Clear(), "clear", "cls");
+        commander.Register(Exit, "exit", "quit");
+        commander.Register(ShowInfo, "info", "inf");
         commander.Register(GetFile, "get");
+
         Command addCommand = commander.Register(AddFile, "add");
         addCommand.Register(AddHost, "host");
         addCommand.Register(AddFile, "file");
-        commander.Register(RemoveFile, "remove");
-        commander.Register(ListFiles, "list");
+
+        commander.Register(RemoveFile, "remove", "rm");
+
+        Command listCommand = commander.Register(ListFiles, "list", "ls");
+        listCommand.Register(ListFiles, "files");
+        listCommand.Register(ListHosts, "hosts");
 
         this.filesManager = filesManager;
     }
@@ -39,6 +45,7 @@ internal class InputHandler
     {
         while (!exit)
         {
+            Console.WriteLine();
             Console.Write("> ");
             Console.CursorVisible = true;
 
@@ -75,7 +82,7 @@ internal class InputHandler
             try
             {
                 Console.WriteLine("Waiting for response...");
-                NetworkSocket? localSocket = Program.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0);
+                NetworkSocket? localSocket = Program.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0, DateTime.MinValue);
                 List<NetworkSocket>? recivedHosts = NetworkClient.Send<List<NetworkSocket>>(ipAddress, port, "GetHostsList", localSocket);
 
                 if (recivedHosts is not null)
@@ -134,10 +141,38 @@ internal class InputHandler
             Console.WriteLine($"Hash: {fileInfo.Hash}");
             Console.WriteLine();
         }
+        Console.CursorTop--;
+    }
+
+    private void ListHosts(string _)
+    {
+        int index = 0;
+        foreach (NetworkSocket host in hostsManager.ToList())
+        {
+            index++;
+            Console.WriteLine($"{index}) {host.IPAddress}:{host.Port}");
+            Console.WriteLine($"Last active: {host.LastActive}");
+            Console.WriteLine();
+        }
+        Console.CursorTop--;
+    }
+
+    private void ShowInfo(string _)
+    {
+        if (Program.PublicIpAddress is not null)
+        {
+            ConsoleExt.WriteLine($"The public IP Address is: {Program.PublicIpAddress}", ConsoleColor.Green);
+            ConsoleExt.WriteLine($"The public port is: {Program.PublicPort}", ConsoleColor.Green);
+            Console.WriteLine();
+        }
+
+        ConsoleExt.WriteLine($"The private IP Address is: {NetworkUtilities.GetIP4Adress()}", ConsoleColor.Green);
+        ConsoleExt.WriteLine($"The private port is: {Program.PrivatePort}", ConsoleColor.Green);
     }
 
     private void Exit(string _)
     {
+        hostsManager.SaveHosts();
         exit = true;
     }
 
@@ -177,9 +212,12 @@ internal class InputHandler
             }
             else if (!sendTask.Result)
             {
+                host.LastActive = DateTime.Now;
                 ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", ConsoleColor.Red);
                 continue;
             }
+
+            host.LastActive = DateTime.Now;
 
             ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Has the requested file", ConsoleColor.Green);
             Console.WriteLine("Requesting file...");
@@ -256,12 +294,12 @@ internal class InputHandler
                         unitsPerSecond = (unitsPerSecond + bytesInOneSecond) / 2;
                         if (unitsPerSecond > 125000)
                         {
-                            unitsPerSecond = unitsPerSecond / 125000;
+                            unitsPerSecond /= 125000;
                             unit = "Mb";
                         }
                         else
                         {
-                            unitsPerSecond = unitsPerSecond / 125;
+                            unitsPerSecond /= 125;
                             unit = "Kb";
                         }
                         bytesInOneSecond = 0;
@@ -291,6 +329,7 @@ internal class InputHandler
                 Console.WriteLine($"File saved at: {Path.GetFullPath($"./Downloads/{fileName}")}");
                 ConsoleExt.WriteLine("Done", ConsoleColor.Green);
                 stopWatch.Stop();
+                hostsManager.SaveHosts();
                 return;
             }
             else
@@ -299,5 +338,6 @@ internal class InputHandler
             }
         }
         ConsoleExt.WriteLine("None of the available hosts have the requested file!", ConsoleColor.Red);
+        hostsManager.SaveHosts();
     }
 }

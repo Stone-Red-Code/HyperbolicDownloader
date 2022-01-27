@@ -33,7 +33,7 @@ internal static class Setup
                 try
                 {
                     Console.WriteLine("Waiting for response...");
-                    NetworkSocket? localSocket = Program.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0);
+                    NetworkSocket? localSocket = Program.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0, DateTime.MinValue);
                     List<NetworkSocket>? recivedHosts = await NetworkClient.SendAsync<List<NetworkSocket>>(ipAddress, port, "GetHostsList", localSocket);
 
                     if (recivedHosts is not null)

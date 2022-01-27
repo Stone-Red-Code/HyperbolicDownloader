@@ -8,6 +8,13 @@ internal class FilesManager
 
     public bool TryAdd(string filePath, out HyperFileInfo? fileInfo, out string? errorMessage)
     {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            fileInfo = null;
+            errorMessage = "Path is empty!";
+            return false;
+        }
+
         string fullPath = Path.GetFullPath(filePath);
 
         if (!File.Exists(fullPath))

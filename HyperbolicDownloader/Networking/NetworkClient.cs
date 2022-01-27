@@ -12,7 +12,7 @@ namespace HyperbolicDownloader.Networking
         public bool IsListening { get; private set; } = false;
 
         private TcpListener? tcpListener;
-        private FilesManager filesManager;
+        private readonly FilesManager filesManager;
         private readonly Dictionary<string, (Type type, Delegate method)> events = new();
 
         public NetworkClient(FilesManager filesManager)
@@ -107,7 +107,7 @@ namespace HyperbolicDownloader.Networking
                         NetworkStream nwStream = client.GetStream();
                         byte[] buffer = new byte[client.ReceiveBufferSize];
 
-                        int bytesRead = await nwStream.ReadAsync(buffer, 0, client.ReceiveBufferSize);
+                        int bytesRead = await nwStream.ReadAsync(buffer.AsMemory(0, client.ReceiveBufferSize));
 
                         string dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 

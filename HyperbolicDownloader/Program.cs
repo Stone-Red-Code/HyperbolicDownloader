@@ -20,8 +20,21 @@ internal class Program
     public const string HostsFilePath = "Hosts.json";
     public const string FilesInfoPath = "Files.json";
 
-    private static int publicPort;
-    private static readonly int privatePort = 3055;
+    public static int PublicPort { get; private set; }
+    public static int PrivatePort { get; } = 3055;
+
+    public static IPAddress? PublicIpAddress
+    {
+        get
+        {
+            if (device is not null)
+            {
+                return device.GetExternalIPAsync().GetAwaiter().GetResult();
+            }
+            return null;
+        }
+    }
+
     private static NatDevice? device;
     private static Mapping? portMapping;
     private static readonly HostsManager hostsManager = new();
@@ -50,7 +63,7 @@ internal class Program
         _ = await OpenPorts();
 
         ConsoleExt.WriteLine($"The private IP Address is: {NetworkUtilities.GetIP4Adress()} ", ConsoleColor.Green);
-        ConsoleExt.WriteLine($"The private port is: {privatePort}", ConsoleColor.Green);
+        ConsoleExt.WriteLine($"The private port is: {PrivatePort}", ConsoleColor.Green);
 
         Console.WriteLine("Starting TCP listener...");
 
@@ -60,7 +73,7 @@ internal class Program
             networkClient.ListenTo<List<NetworkSocket>>("DiscoverAnswer", DiscoverAnswer);
             networkClient.ListenTo<string>("Message", ReciveMessage);
             networkClient.ListenTo<string>("HasFile", HasFile);
-            networkClient.StartListening(privatePort);
+            networkClient.StartListening(PrivatePort);
         }
         catch (SocketException ex)
         {
@@ -71,23 +84,25 @@ internal class Program
         BroadcastClient broadcastClient = new BroadcastClient();
 
         Console.WriteLine("Running local discovery routine...");
-        BroadcastClient.Send(BroadcastPort, privatePort.ToString());
+        BroadcastClient.Send(BroadcastPort, PrivatePort.ToString());
         await Task.Delay(5000);
 
+        int activeHostsCount = 0;
         if (hostsManager.Count > 0)
         {
             Console.WriteLine("Checking if hosts are active...");
-            hostsManager.RemoveInactiveHosts();
+            activeHostsCount = hostsManager.CheckHostsActivity();
         }
 
-        if (hostsManager.Count == 0)
+        if (activeHostsCount == 0)
         {
             hostsManager.AddRange(await Setup.ConfigureHost());
             Console.WriteLine("Checking if hosts are active...");
-            hostsManager.RemoveInactiveHosts();
+            activeHostsCount = hostsManager.CheckHostsActivity();
         }
 
-        Console.WriteLine($"{hostsManager.Count} active host(s).");
+        Console.WriteLine($"{hostsManager.Count} known host(s).");
+        Console.WriteLine($"{activeHostsCount} active host(s).");
         Console.WriteLine("Starting broadcast listener...");
         broadcastClient.StartListening(BroadcastPort);
         broadcastClient.OnBroadcastRecived += BroadcastClient_OnBroadcastRecived;
@@ -116,7 +131,7 @@ internal class Program
 
         if (success)
         {
-            hostsManager.Add(new NetworkSocket(recivedEventArgs.IPEndPoint.Address.ToString(), remotePort));
+            hostsManager.Add(new NetworkSocket(recivedEventArgs.IPEndPoint.Address.ToString(), remotePort, DateTime.Now));
             try
             {
                 await NetworkClient.SendAsync(recivedEventArgs.IPEndPoint.Address, remotePort, "DiscoverAnswer", hostsToSend);
@@ -170,7 +185,7 @@ internal class Program
     {
         try
         {
-            publicPort = random.Next(1000, 6000);
+            PublicPort = random.Next(1000, 6000);
 
             NatDiscoverer? discoverer = new NatDiscoverer();
             device = await discoverer.DiscoverDeviceAsync();
@@ -178,11 +193,11 @@ internal class Program
             IPAddress? ip = await device.GetExternalIPAsync();
             ConsoleExt.WriteLine($"The public IP Address is: {ip} ", ConsoleColor.Green);
 
-            portMapping = new Mapping(Protocol.Tcp, privatePort, publicPort, "HyperbolicDowloader");
+            portMapping = new Mapping(Protocol.Tcp, PrivatePort, PublicPort, "HyperbolicDowloader");
 
             await device.CreatePortMapAsync(portMapping);
 
-            ConsoleExt.WriteLine($"The public port is: {publicPort}", ConsoleColor.Green);
+            ConsoleExt.WriteLine($"The public port is: {PublicPort}", ConsoleColor.Green);
             return true;
         }
         catch (NatDeviceNotFoundException)
@@ -192,7 +207,7 @@ internal class Program
         }
         catch (MappingException ex)
         {
-            ConsoleExt.WriteLine($"An error occurred while mapping the private port ({privatePort}) to the public port ({publicPort})! Error message: {ex.Message}", ConsoleColor.Red);
+            ConsoleExt.WriteLine($"An error occurred while mapping the private port ({PrivatePort}) to the public port ({PublicPort})! Error message: {ex.Message}", ConsoleColor.Red);
             return false;
         }
     }
@@ -226,11 +241,12 @@ internal class Program
     private static void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
     {
         ClosePorts();
+        hostsManager.SaveHosts();
     }
 
     public static NetworkSocket? GetLocalSocket()
     {
-        int port = publicPort;
+        int port = PublicPort;
         string? ipAddress = null;
 
         if (device is not null)
@@ -241,7 +257,7 @@ internal class Program
         if (ipAddress is null || ipAddress == "0.0.0.0")
         {
             ipAddress = NetworkUtilities.GetIP4Adress()?.ToString();
-            port = privatePort;
+            port = PrivatePort;
         }
 
         if (ipAddress is null)
@@ -249,6 +265,6 @@ internal class Program
             return null;
         }
 
-        return new NetworkSocket(ipAddress, port);
+        return new NetworkSocket(ipAddress, port, DateTime.Now);
     }
 }

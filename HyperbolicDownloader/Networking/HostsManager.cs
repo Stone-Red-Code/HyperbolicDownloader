@@ -40,9 +40,10 @@ internal class HostsManager
         SaveHosts();
     }
 
-    public void RemoveInactiveHosts()
+    public int CheckHostsActivity()
     {
         List<NetworkSocket> hostsToRemove = new List<NetworkSocket>();
+        int activeHostsCount = 0;
         foreach (NetworkSocket host in hosts)
         {
             ConsoleExt.Write($"{host.IPAddress}:{host.Port} > ???", ConsoleColor.DarkYellow);
@@ -55,16 +56,24 @@ internal class HostsManager
                 if (tcpClient.Connected)
                 {
                     ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Active", ConsoleColor.Green);
+                    host.LastActive = DateTime.Now;
+                    activeHostsCount++;
                 }
                 else
                 {
-                    hostsToRemove.Add(host);
+                    if (DateTime.Now - host.LastActive >= new TimeSpan(24, 0, 0))
+                    {
+                        hostsToRemove.Add(host);
+                    }
                     ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
                 }
             }
             catch
             {
-                hostsToRemove.Add(host);
+                if (DateTime.Now - host.LastActive >= new TimeSpan(24, 0, 0))
+                {
+                    hostsToRemove.Add(host);
+                }
                 Console.CursorLeft = 0;
                 ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
             }
@@ -76,6 +85,7 @@ internal class HostsManager
         }
 
         SaveHosts();
+        return activeHostsCount;
     }
 
     public List<NetworkSocket> ToList()
@@ -83,7 +93,7 @@ internal class HostsManager
         return hosts.ToList();
     }
 
-    private void SaveHosts()
+    public void SaveHosts()
     {
         File.WriteAllText(Program.HostsFilePath, JsonSerializer.Serialize(hosts));
     }
