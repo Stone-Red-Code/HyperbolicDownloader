@@ -26,6 +26,7 @@ internal class InputHandler
         commander.Register((_) => Console.Clear(), "clear", "cls");
         commander.Register(Exit, "exit", "quit");
         commander.Register(ShowInfo, "info", "inf");
+        commander.Register(Discover, "discover", "disc");
         commander.Register(GetFile, "get");
 
         Command addCommand = commander.Register(AddFile, "add");
@@ -38,7 +39,7 @@ internal class InputHandler
         listCommand.Register(ListFiles, "files");
         listCommand.Register(ListHosts, "hosts");
 
-        commander.Register((_) => hostsManager.CheckHostsActivity(), "status", "check");
+        commander.Register(CheckActiveHosts, "status", "check");
 
         this.filesManager = filesManager;
     }
@@ -98,6 +99,10 @@ internal class InputHandler
                 }
             }
             catch (SocketException ex)
+            {
+                ConsoleExt.WriteLine($"Invalid host! Error message: {ex.Message}", ConsoleColor.Red);
+            }
+            catch (IOException ex)
             {
                 ConsoleExt.WriteLine($"Invalid host! Error message: {ex.Message}", ConsoleColor.Red);
             }
@@ -172,6 +177,26 @@ internal class InputHandler
         ConsoleExt.WriteLine($"The private port is: {Program.PrivatePort}", ConsoleColor.Green);
     }
 
+    private void Discover(string _)
+    {
+        Console.WriteLine("Running local discovery routine...");
+        BroadcastClient.Send(Program.BroadcastPort, Program.PrivatePort.ToString());
+        Thread.Sleep(3000);
+    }
+
+    private void CheckActiveHosts(string _)
+    {
+        int activeHostsCount = hostsManager.CheckHostsActivity();
+        if (activeHostsCount == 0)
+        {
+            ConsoleExt.WriteLine("No active hosts found!", ConsoleColor.Red);
+            ConsoleExt.WriteLine("Use 'add host xxx.xxx.xxx.xxx:yyyy' to add a new host.", ConsoleColor.Red);
+        }
+
+        Console.WriteLine($"{hostsManager.Count} known host(s).");
+        Console.WriteLine($"{activeHostsCount} active host(s).");
+    }
+
     private void Exit(string _)
     {
         hostsManager.SaveHosts();
@@ -236,8 +261,19 @@ internal class InputHandler
 
             byte[] bytesToSend = Encoding.ASCII.GetBytes($"Download {hash}");
             nwStream.Write(bytesToSend);
-            nwStream.ReadTimeout = 5000;
-            int bytesRead = nwStream.Read(buffer, 0, tcpClient.ReceiveBufferSize);
+            nwStream.ReadTimeout = 30000;
+
+            int bytesRead;
+            try
+            {
+                bytesRead = nwStream.Read(buffer, 0, tcpClient.ReceiveBufferSize);
+            }
+            catch (IOException)
+            {
+                Console.WriteLine();
+                ConsoleExt.WriteLine("Lost connection to other host!", ConsoleColor.Red);
+                continue;
+            }
 
             string dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 

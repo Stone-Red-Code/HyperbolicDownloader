@@ -9,7 +9,7 @@ namespace HyperbolicDownloader;
 
 internal class HostsManager
 {
-    private readonly List<NetworkSocket> hosts = new List<NetworkSocket>();
+    private List<NetworkSocket> hosts = new List<NetworkSocket>();
     public int Count => hosts.Count;
 
     public void AddRange(IEnumerable<NetworkSocket> hosts)
@@ -98,6 +98,7 @@ internal class HostsManager
 
     public void SaveHosts()
     {
+        hosts = hosts.OrderByDescending(h => h.LastActive).ToList();
         File.WriteAllText(Program.HostsFilePath, JsonSerializer.Serialize(hosts));
     }
 }

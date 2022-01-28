@@ -16,7 +16,7 @@ namespace HyperbolicDownloader;
 
 internal class Program
 {
-    private const int BroadcastPort = 2155;
+    public const int BroadcastPort = 2155;
     public const string HostsFilePath = "Hosts.json";
     public const string FilesInfoPath = "Files.json";
 
@@ -85,7 +85,7 @@ internal class Program
 
         Console.WriteLine("Running local discovery routine...");
         BroadcastClient.Send(BroadcastPort, PrivatePort.ToString());
-        await Task.Delay(5000);
+        await Task.Delay(3000);
 
         int activeHostsCount = 0;
         if (hostsManager.Count > 0)
@@ -96,9 +96,8 @@ internal class Program
 
         if (activeHostsCount == 0)
         {
-            hostsManager.AddRange(await Setup.ConfigureHost());
-            Console.WriteLine("Checking if hosts are active...");
-            activeHostsCount = hostsManager.CheckHostsActivity();
+            ConsoleExt.WriteLine("No active hosts found!", ConsoleColor.Red);
+            ConsoleExt.WriteLine("Use 'add host xxx.xxx.xxx.xxx:yyyy' to add a new host.", ConsoleColor.Red);
         }
 
         Console.WriteLine($"{hostsManager.Count} known host(s).");

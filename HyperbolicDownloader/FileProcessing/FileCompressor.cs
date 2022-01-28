@@ -24,13 +24,11 @@ internal static class FileCompressor
     {
         byte[] buffer = new byte[chunkSize];
         int bytesRead;
-        using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read))
-        using (BufferedStream bs = new BufferedStream(fs))
+        using FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using BufferedStream bs = new BufferedStream(fs);
+        while ((bytesRead = bs.Read(buffer, 0, chunkSize)) != 0)
         {
-            while ((bytesRead = bs.Read(buffer, 0, chunkSize)) != 0)
-            {
-                yield return buffer;
-            }
+            yield return buffer;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using HyperbolicDownloader.FileProcessing;
 
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -155,44 +156,51 @@ namespace HyperbolicDownloader.Networking
 
         private async Task Upload(TcpClient client, string hash)
         {
-            byte[] bytesToSend;
-            hash = hash.Trim();
-            NetworkStream nwStream = client.GetStream();
-            client.SendBufferSize = 64000;
-            if (filesManager.TryGet(hash, out HyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
+            try
             {
-                if (hash != await FileValidator.CalculateHashAsync(hyperFileInfo.FilePath))
+                byte[] bytesToSend;
+                hash = hash.Trim();
+                NetworkStream nwStream = client.GetStream();
+                client.SendBufferSize = 64000;
+                if (filesManager.TryGet(hash, out HyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
                 {
-                    bytesToSend = Encoding.ASCII.GetBytes("Hash does not match!");
-                    await nwStream.WriteAsync(bytesToSend);
-                    return;
-                }
-
-                //string compressedFilePath = $"{hash + DateTime.Now.Millisecond}.temp";
-
-                //FileCompressor.CompressFile(hyperFileInfo.FilePath, compressedFilePath);
-
-                FileInfo compressedFileInfo = new FileInfo(hyperFileInfo.FilePath);
-
-                bytesToSend = Encoding.ASCII.GetBytes($"{compressedFileInfo.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}");
-                await nwStream.WriteAsync(bytesToSend);
-
-                foreach (byte[]? chunk in FileCompressor.ReadChunks(hyperFileInfo.FilePath, 64000))
-                {
-                    if (chunk is not null)
+                    if (hash != await FileValidator.CalculateHashAsync(hyperFileInfo.FilePath))
                     {
-                        await nwStream.WriteAsync(chunk);
+                        bytesToSend = Encoding.ASCII.GetBytes("Hash does not match!");
+                        await nwStream.WriteAsync(bytesToSend);
+                        return;
                     }
-                }
 
-                // File.Delete(compressedFilePath);
+                    //string compressedFilePath = $"{hash + DateTime.Now.Millisecond}.temp";
+
+                    //FileCompressor.CompressFile(hyperFileInfo.FilePath, compressedFilePath);
+
+                    FileInfo compressedFileInfo = new FileInfo(hyperFileInfo.FilePath);
+
+                    bytesToSend = Encoding.ASCII.GetBytes($"{compressedFileInfo.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}");
+                    await nwStream.WriteAsync(bytesToSend);
+
+                    foreach (byte[]? chunk in FileCompressor.ReadChunks(hyperFileInfo.FilePath, 64000))
+                    {
+                        if (chunk is not null)
+                        {
+                            await nwStream.WriteAsync(chunk);
+                        }
+                    }
+
+                    // File.Delete(compressedFilePath);
+                }
+                else
+                {
+                    bytesToSend = Encoding.ASCII.GetBytes("File not found!");
+                    await nwStream.WriteAsync(bytesToSend);
+                }
+                client.Close();
             }
-            else
+            catch (Exception ex)
             {
-                bytesToSend = Encoding.ASCII.GetBytes("File not found!");
-                await nwStream.WriteAsync(bytesToSend);
+                Debug.WriteLine(ex);
             }
-            client.Close();
         }
 
         public void StopListening()
