@@ -1,5 +1,4 @@
-﻿
-using HyperbolicDownloader.FileProcessing;
+﻿using HyperbolicDownloader.FileProcessing;
 using HyperbolicDownloader.Networking;
 using HyperbolicDownloader.UserInterface;
 
@@ -10,30 +9,23 @@ using Stone_Red_Utilities.ConsoleExtentions;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text.Json;
 
 namespace HyperbolicDownloader;
 
-internal class Program
+internal static class Program
 {
     public const int BroadcastPort = 2155;
-    public const string HostsFilePath = "Hosts.json";
-    public const string FilesInfoPath = "Files.json";
+
+    public static string BasePath { get; } = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) ?? string.Empty;
+    public static string HostsFilePath { get; } = Path.Combine(BasePath, "Hosts.json");
+    public static string FilesInfoPath { get; } = Path.Combine(BasePath, "Files.json");
 
     public static int PublicPort { get; private set; }
     public static int PrivatePort { get; } = 3055;
 
-    public static IPAddress? PublicIpAddress
-    {
-        get
-        {
-            if (device is not null)
-            {
-                return device.GetExternalIPAsync().GetAwaiter().GetResult();
-            }
-            return null;
-        }
-    }
+    public static IPAddress? PublicIpAddress => device?.GetExternalIPAsync().GetAwaiter().GetResult();
 
     private static NatDevice? device;
     private static Mapping? portMapping;
@@ -42,7 +34,7 @@ internal class Program
     private static readonly NetworkClient networkClient = new(filesManager);
     private static readonly Random random = new();
 
-    private static async Task Main()
+    private static async Task Main(string[] args)
     {
         Console.CancelKeyPress += Console_CancelKeyPress;
         Console.CursorVisible = false;
@@ -56,7 +48,20 @@ internal class Program
         if (File.Exists(FilesInfoPath))
         {
             string filesJson = await File.ReadAllTextAsync(FilesInfoPath);
-            filesManager.AddRange(JsonSerializer.Deserialize<List<HyperFileInfo>>(filesJson) ?? new());
+            filesManager.AddRange(JsonSerializer.Deserialize<List<PrivateHyperFileInfo>>(filesJson) ?? new());
+        }
+
+        InputHandler inputHandler = new InputHandler(hostsManager, filesManager);
+
+        if (args.Length > 0 && File.Exists(args[0]))
+        {
+            inputHandler.GetFileFrom(args[0]);
+            Console.WriteLine("Do you want to continue using this instance? [y/N]");
+            if (char.ToLower(Console.ReadKey().KeyChar) != 'y')
+            {
+                return;
+            }
+            Console.WriteLine();
         }
 
         Console.WriteLine("Searching for a UPnP/NAT-PMP device...");
@@ -77,7 +82,8 @@ internal class Program
         }
         catch (SocketException ex)
         {
-            Console.WriteLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}");
+            ConsoleExt.WriteLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}", ConsoleColor.Red); // net stop hns && net start hns
+            Console.ReadKey();
             return;
         }
 
@@ -107,7 +113,7 @@ internal class Program
         broadcastClient.OnBroadcastRecived += BroadcastClient_OnBroadcastRecived;
         ConsoleExt.WriteLine("Done", ConsoleColor.Green);
 
-        new InputHandler(hostsManager, filesManager).ReadInput();
+        inputHandler.ReadInput();
         ClosePorts();
     }
 

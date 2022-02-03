@@ -23,10 +23,9 @@ internal static class FileCompressor
     public static IEnumerable<byte[]> ReadChunks(string path, int chunkSize)
     {
         byte[] buffer = new byte[chunkSize];
-        int bytesRead;
         using FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         using BufferedStream bs = new BufferedStream(fs);
-        while ((bytesRead = bs.Read(buffer, 0, chunkSize)) != 0)
+        while (bs.Read(buffer, 0, chunkSize) != 0)
         {
             yield return buffer;
         }

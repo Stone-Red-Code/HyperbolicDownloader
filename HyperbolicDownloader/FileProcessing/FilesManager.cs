@@ -4,9 +4,9 @@ namespace HyperbolicDownloader.FileProcessing;
 
 internal class FilesManager
 {
-    private readonly List<HyperFileInfo> files = new List<HyperFileInfo>();
+    private readonly List<PrivateHyperFileInfo> files = new List<PrivateHyperFileInfo>();
 
-    public bool TryAdd(string filePath, out HyperFileInfo? fileInfo, out string? errorMessage)
+    public bool TryAdd(string filePath, out PrivateHyperFileInfo? fileInfo, out string? errorMessage)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
@@ -33,7 +33,7 @@ internal class FilesManager
             return false;
         }
 
-        fileInfo = new HyperFileInfo(hash, fullPath);
+        fileInfo = new PrivateHyperFileInfo(hash, fullPath);
 
         files.Add(fileInfo);
 
@@ -43,9 +43,9 @@ internal class FilesManager
         return true;
     }
 
-    public void AddRange(IEnumerable<HyperFileInfo> fileInfos)
+    public void AddRange(IEnumerable<PrivateHyperFileInfo> fileInfos)
     {
-        foreach (HyperFileInfo fileInfo in fileInfos)
+        foreach (PrivateHyperFileInfo fileInfo in fileInfos)
         {
             if (File.Exists(fileInfo.FilePath) && !Contains(fileInfo.Hash))
             {
@@ -56,7 +56,7 @@ internal class FilesManager
         SaveFiles();
     }
 
-    public bool TryGet(string hash, out HyperFileInfo? fileInfo)
+    public bool TryGet(string hash, out PrivateHyperFileInfo? fileInfo)
     {
         if (Contains(hash))
         {
@@ -84,7 +84,7 @@ internal class FilesManager
         return files.Any(f => f.Hash == hash);
     }
 
-    public List<HyperFileInfo> ToList()
+    public List<PrivateHyperFileInfo> ToList()
     {
         return files.ToList();
     }

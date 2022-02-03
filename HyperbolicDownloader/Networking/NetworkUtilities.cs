@@ -4,7 +4,7 @@ using System.Net.Sockets;
 
 namespace HyperbolicDownloader.Networking;
 
-internal class NetworkUtilities
+internal static class NetworkUtilities
 {
     public static UnicastIPAddressInformation? GetUnicastIPAddressInformation(IPAddress address)
     {
@@ -12,12 +12,9 @@ internal class NetworkUtilities
         {
             foreach (UnicastIPAddressInformation unicastIPAddressInformation in adapter.GetIPProperties().UnicastAddresses)
             {
-                if (unicastIPAddressInformation.Address.AddressFamily == AddressFamily.InterNetwork)
+                if (unicastIPAddressInformation.Address.AddressFamily == AddressFamily.InterNetwork && address.Equals(unicastIPAddressInformation.Address))
                 {
-                    if (address.Equals(unicastIPAddressInformation.Address))
-                    {
-                        return unicastIPAddressInformation;
-                    }
+                    return unicastIPAddressInformation;
                 }
             }
         }

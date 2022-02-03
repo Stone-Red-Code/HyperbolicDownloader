@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 
 namespace HyperbolicDownloader.UserInterface;
 
@@ -27,7 +28,12 @@ internal class InputHandler
         commander.Register(Exit, "exit", "quit");
         commander.Register(ShowInfo, "info", "inf");
         commander.Register(Discover, "discover", "disc");
-        commander.Register(GetFile, "get");
+
+        Command getCommand = commander.Register(GetFile, "get");
+        getCommand.Register(GetFileFrom, "from");
+
+        Command generateCommad = commander.Register(GenerateFileFull, "generate", "gen");
+        generateCommad.Register(GenerateFileSingle, "single");
 
         Command addCommand = commander.Register(AddFile, "add");
         addCommand.Register(AddHost, "host");
@@ -113,9 +119,9 @@ internal class InputHandler
         }
     }
 
-    private void AddFile(string args)
+    private void AddFile(string path)
     {
-        if (filesManager.TryAdd(args, out HyperFileInfo? fileInfo, out string? message))
+        if (filesManager.TryAdd(path, out PrivateHyperFileInfo? fileInfo, out string? message))
         {
             ConsoleExt.WriteLine($"Added file: {fileInfo!.FilePath}", ConsoleColor.Green);
             Console.WriteLine($"Hash: {fileInfo.Hash}");
@@ -126,9 +132,11 @@ internal class InputHandler
         }
     }
 
-    private void RemoveFile(string args)
+    private void RemoveFile(string hash)
     {
-        if (filesManager.TryRemove(args))
+        hash = hash.Trim().ToLower();
+
+        if (filesManager.TryRemove(hash))
         {
             ConsoleExt.WriteLine($"Removed file successfully!", ConsoleColor.Green);
         }
@@ -141,7 +149,7 @@ internal class InputHandler
     private void ListFiles(string _)
     {
         int index = 0;
-        foreach (HyperFileInfo fileInfo in filesManager.ToList())
+        foreach (PrivateHyperFileInfo fileInfo in filesManager.ToList())
         {
             index++;
             Console.WriteLine($"{index}) {fileInfo.FilePath}");
@@ -203,6 +211,151 @@ internal class InputHandler
         exit = true;
     }
 
+    private void GenerateFileSingle(string hash)
+    {
+        string directoryPath = Path.Combine(Program.BasePath, "GeneratedFiles");
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        hash = hash.Trim().ToLower();
+
+        if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
+        {
+            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
+            return;
+        }
+
+        string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
+        string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
+
+        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
+
+        NetworkSocket? localHost = Program.GetLocalSocket();
+        if (localHost is null)
+        {
+            ConsoleExt.WriteLine("Network error!", ConsoleColor.Red);
+            return;
+        }
+
+        publicHyperFileInfo.Hosts.Add(localHost);
+
+        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
+        string json = JsonSerializer.Serialize(publicHyperFileInfo, options);
+
+        File.WriteAllText(filePath, json);
+
+        ConsoleExt.WriteLine("Done", ConsoleColor.Green);
+        Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
+    }
+
+    private void GenerateFileFull(string hash)
+    {
+        string directoryPath = Path.Combine(Program.BasePath, "GeneratedFiles");
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        hash = hash.Trim().ToLower();
+
+        if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
+        {
+            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
+            return;
+        }
+
+        string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
+        string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
+
+        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
+
+        NetworkSocket? localHost = Program.GetLocalSocket();
+        if (localHost is null)
+        {
+            ConsoleExt.WriteLine("Network error!", ConsoleColor.Red);
+            return;
+        }
+
+        foreach (NetworkSocket host in hostsManager.ToList())
+        {
+            bool validIpAdress = IPAddress.TryParse(host.IPAddress, out IPAddress? ipAddress);
+
+            if (!validIpAdress)
+            {
+                hostsManager.Remove(host, true);
+                continue;
+            }
+
+            ConsoleExt.Write($"{host.IPAddress}:{host.Port} > ???", ConsoleColor.DarkYellow);
+
+            Console.CursorLeft = 0;
+
+            Task<bool> sendTask = NetworkClient.SendAsync<bool>(ipAddress!, host.Port, "HasFile", hash);
+
+            _ = sendTask.Wait(1000);
+
+            if (!sendTask.IsCompletedSuccessfully)
+            {
+                Console.CursorLeft = 0;
+                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
+
+                hostsManager.Remove(host);
+                continue;
+            }
+            else if (!sendTask.Result)
+            {
+                host.LastActive = DateTime.Now;
+                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", ConsoleColor.Red);
+                continue;
+            }
+
+            host.LastActive = DateTime.Now;
+
+            ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Has the requested file", ConsoleColor.Green);
+            publicHyperFileInfo.Hosts.Add(host);
+        }
+
+        publicHyperFileInfo.Hosts.Add(localHost);
+
+        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
+        string json = JsonSerializer.Serialize(publicHyperFileInfo, options);
+
+        File.WriteAllText(filePath, json);
+
+        ConsoleExt.WriteLine("Done", ConsoleColor.Green);
+        Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
+    }
+
+    public void GetFileFrom(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            ConsoleExt.WriteLine("Path is empty!", ConsoleColor.Red);
+            return;
+        }
+
+        string fullPath = Path.GetFullPath(path);
+
+        if (!File.Exists(fullPath))
+        {
+            ConsoleExt.WriteLine("Invalid file path!", ConsoleColor.Red);
+        }
+
+        string json = File.ReadAllText(fullPath);
+
+        PublicHyperFileInfo? publicHyperFileInfo = JsonSerializer.Deserialize<PublicHyperFileInfo>(json);
+        if (publicHyperFileInfo == null)
+        {
+            ConsoleExt.WriteLine("Parsing file failed!", ConsoleColor.Red);
+            return;
+        }
+
+        hostsManager.AddRange(publicHyperFileInfo.Hosts);
+        GetFile(publicHyperFileInfo.Hash);
+    }
+
     private void GetFile(string hash)
     {
         if (string.IsNullOrEmpty(hash))
@@ -211,7 +364,7 @@ internal class InputHandler
             return;
         }
 
-        hash = hash.Trim();
+        hash = hash.Trim().ToLower();
 
         foreach (NetworkSocket host in hostsManager.ToList())
         {
@@ -251,7 +404,7 @@ internal class InputHandler
             ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Has the requested file", ConsoleColor.Green);
             Console.WriteLine("Requesting file...");
 
-            TcpClient tcpClient = new TcpClient();
+            using TcpClient tcpClient = new TcpClient();
             tcpClient.Connect(ipAddress!, host.Port);
             tcpClient.ReceiveBufferSize = 64000;
 
@@ -290,19 +443,20 @@ internal class InputHandler
                 }
 
                 string fileName = parts[1].ToFileName();
-                string filepath = $"./Downloads/{fileName}";
+                string directoryPath = Path.Combine(Program.BasePath, "Downloads");
+                string filePath = Path.Combine(directoryPath, fileName);
 
                 Console.WriteLine($"File name: {fileName}");
                 Console.WriteLine($"Starting download...");
 
                 int totalBytesRead = 0;
 
-                if (!Directory.Exists("./Downloads"))
+                if (!Directory.Exists(directoryPath))
                 {
-                    Directory.CreateDirectory("./Downloads");
+                    Directory.CreateDirectory(directoryPath);
                 }
 
-                using FileStream? fileStream = new FileStream(filepath, FileMode.Create);
+                using FileStream? fileStream = new FileStream(filePath, FileMode.Create);
 
                 int bytesInOneSecond = 0;
                 int unitsPerSecond = 0;
@@ -362,16 +516,16 @@ internal class InputHandler
                 Console.WriteLine();
 
                 Console.WriteLine("Validating file...");
-                if (FileValidator.ValidateHash(filepath, hash))
+                if (FileValidator.ValidateHash(filePath, hash))
                 {
-                    _ = filesManager.TryAdd(filepath, out _, out _);
+                    _ = filesManager.TryAdd(filePath, out _, out _);
                 }
                 else
                 {
                     ConsoleExt.WriteLine("Warning: File hash does not match! File might me corrupted or manipulated!", ConsoleColor.DarkYellow);
                 }
 
-                Console.WriteLine($"File saved at: {Path.GetFullPath(filepath)}");
+                Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
                 ConsoleExt.WriteLine("Done", ConsoleColor.Green);
                 stopWatch.Stop();
                 hostsManager.SaveHosts();

@@ -88,7 +88,7 @@ namespace HyperbolicDownloader.Networking
 
         public void StartListening(int port)
         {
-            if (IsListening == true)
+            if (IsListening)
             {
                 throw new InvalidOperationException("Already listening!");
             }
@@ -146,7 +146,7 @@ namespace HyperbolicDownloader.Networking
                     {
                         if (ex.SocketErrorCode != SocketError.Interrupted)
                         {
-                            throw ex;
+                            throw;
                         }
                     }
                 }
@@ -162,22 +162,11 @@ namespace HyperbolicDownloader.Networking
                 hash = hash.Trim();
                 NetworkStream nwStream = client.GetStream();
                 client.SendBufferSize = 64000;
-                if (filesManager.TryGet(hash, out HyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
+                if (filesManager.TryGet(hash, out PrivateHyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
                 {
-                    if (hash != await FileValidator.CalculateHashAsync(hyperFileInfo.FilePath))
-                    {
-                        bytesToSend = Encoding.ASCII.GetBytes("Hash does not match!");
-                        await nwStream.WriteAsync(bytesToSend);
-                        return;
-                    }
+                    FileInfo fileInfo = new FileInfo(hyperFileInfo.FilePath);
 
-                    //string compressedFilePath = $"{hash + DateTime.Now.Millisecond}.temp";
-
-                    //FileCompressor.CompressFile(hyperFileInfo.FilePath, compressedFilePath);
-
-                    FileInfo compressedFileInfo = new FileInfo(hyperFileInfo.FilePath);
-
-                    bytesToSend = Encoding.ASCII.GetBytes($"{compressedFileInfo.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}");
+                    bytesToSend = Encoding.ASCII.GetBytes($"{fileInfo.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}");
                     await nwStream.WriteAsync(bytesToSend);
 
                     foreach (byte[]? chunk in FileCompressor.ReadChunks(hyperFileInfo.FilePath, 64000))
@@ -187,8 +176,6 @@ namespace HyperbolicDownloader.Networking
                             await nwStream.WriteAsync(chunk);
                         }
                     }
-
-                    // File.Delete(compressedFilePath);
                 }
                 else
                 {
