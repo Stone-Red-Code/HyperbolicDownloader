@@ -33,7 +33,7 @@ internal class InputHandler
         getCommand.Register(GetFileFrom, "from");
 
         Command generateCommad = commander.Register(GenerateFileFull, "generate", "gen");
-        generateCommad.Register(GenerateFileSingle, "single");
+        generateCommad.Register(GenerateFileSingle, "noscan");
 
         Command addCommand = commander.Register(AddFile, "add");
         addCommand.Register(AddHost, "host");
@@ -176,12 +176,12 @@ internal class InputHandler
     {
         if (Program.PublicIpAddress is not null)
         {
-            ConsoleExt.WriteLine($"The public IP Address is: {Program.PublicIpAddress}", ConsoleColor.Green);
+            ConsoleExt.WriteLine($"The public IP address is: {Program.PublicIpAddress}", ConsoleColor.Green);
             ConsoleExt.WriteLine($"The public port is: {Program.PublicPort}", ConsoleColor.Green);
             Console.WriteLine();
         }
 
-        ConsoleExt.WriteLine($"The private IP Address is: {NetworkUtilities.GetIP4Adress()}", ConsoleColor.Green);
+        ConsoleExt.WriteLine($"The private IP address is: {NetworkUtilities.GetIP4Adress()}", ConsoleColor.Green);
         ConsoleExt.WriteLine($"The private port is: {Program.PrivatePort}", ConsoleColor.Green);
     }
 

@@ -67,7 +67,7 @@ internal static class Program
         Console.WriteLine("Searching for a UPnP/NAT-PMP device...");
         _ = await OpenPorts();
 
-        ConsoleExt.WriteLine($"The private IP Address is: {NetworkUtilities.GetIP4Adress()} ", ConsoleColor.Green);
+        ConsoleExt.WriteLine($"The private IP address is: {NetworkUtilities.GetIP4Adress()} ", ConsoleColor.Green);
         ConsoleExt.WriteLine($"The private port is: {PrivatePort}", ConsoleColor.Green);
 
         Console.WriteLine("Starting TCP listener...");
@@ -196,7 +196,7 @@ internal static class Program
             device = await discoverer.DiscoverDeviceAsync();
 
             IPAddress? ip = await device.GetExternalIPAsync();
-            ConsoleExt.WriteLine($"The public IP Address is: {ip} ", ConsoleColor.Green);
+            ConsoleExt.WriteLine($"The public IP address is: {ip} ", ConsoleColor.Green);
 
             portMapping = new Mapping(Protocol.Tcp, PrivatePort, PublicPort, "HyperbolicDowloader");
 
