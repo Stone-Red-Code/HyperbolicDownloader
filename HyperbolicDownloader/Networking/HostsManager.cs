@@ -16,7 +16,7 @@ internal class HostsManager
     {
         foreach (NetworkSocket host in hosts)
         {
-            if (!this.hosts.Any(x => x.IPAddress == host.IPAddress && x.Port == host.Port))
+            if (!Contains(host))
             {
                 this.hosts.Add(host);
             }
@@ -27,7 +27,7 @@ internal class HostsManager
 
     public void Add(NetworkSocket host)
     {
-        if (!hosts.Any(x => x.IPAddress == host.IPAddress && x.Port == host.Port))
+        if (!Contains(host))
         {
             hosts.Add(host);
         }
@@ -41,6 +41,11 @@ internal class HostsManager
             hosts.RemoveAll(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
         }
         SaveHosts();
+    }
+
+    public bool Contains(NetworkSocket host)
+    {
+        return hosts.Any(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
     }
 
     public int CheckHostsActivity()

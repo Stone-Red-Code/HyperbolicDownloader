@@ -37,7 +37,9 @@ internal class InputHandler
         addCommand.Register(hostCommands.AddHost, "host");
         addCommand.Register(fileCommands.AddFile, "file");
 
-        commander.Register(fileCommands.RemoveFile, "remove", "rm");
+        Command removeCommand = commander.Register(fileCommands.RemoveFile, "remove", "rm");
+        removeCommand.Register(hostCommands.RemoveHost, "host");
+        removeCommand.Register(fileCommands.RemoveFile, "file");
 
         Command listCommand = commander.Register(fileCommands.ListFiles, "list", "ls");
         listCommand.Register(fileCommands.ListFiles, "files");
@@ -57,9 +59,16 @@ internal class InputHandler
             string input = Console.ReadLine()?.Trim() ?? string.Empty;
 
             Console.CursorVisible = false;
-            if (!commander.Execute(input))
+            try
             {
-                ConsoleExt.WriteLine("Unknown command!", ConsoleColor.Red);
+                if (!commander.Execute(input))
+                {
+                    ConsoleExt.WriteLine("Unknown command!", ConsoleColor.Red);
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleExt.WriteLine($"An unexpected error occurred! {ex}", ConsoleColor.Red);
             }
         }
     }

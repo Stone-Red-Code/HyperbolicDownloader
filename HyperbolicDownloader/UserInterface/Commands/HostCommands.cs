@@ -39,7 +39,15 @@ internal class HostCommands
     public void ListHosts(string _)
     {
         int index = 0;
-        foreach (NetworkSocket host in hostsManager.ToList())
+        List<NetworkSocket> hosts = hostsManager.ToList();
+
+        if (hosts.Count == 0)
+        {
+            ConsoleExt.WriteLine("No known hosts", ConsoleColor.DarkYellow);
+            return;
+        }
+
+        foreach (NetworkSocket host in hosts)
         {
             index++;
             Console.WriteLine($"{index}) {host.IPAddress}:{host.Port}");
@@ -47,6 +55,44 @@ internal class HostCommands
             Console.WriteLine();
         }
         Console.CursorTop--;
+    }
+
+    public void RemoveHost(string args)
+    {
+        string[] parts = args.Split(":");
+
+        if (parts.Length != 2)
+        {
+            ConsoleExt.WriteLine("Invalid format! Use this format: (xxx.xxx.xxx.xxx:yyyy)", ConsoleColor.Red);
+            return;
+        }
+
+        string ipAddressInput = parts[0];
+        string portInput = parts[1];
+
+        _ = int.TryParse(portInput, out int port);
+        if (port < 1000 || port >= 6000)
+        {
+            ConsoleExt.WriteLine("Invalid port number!", ConsoleColor.Red);
+            return;
+        }
+
+        if (!IPAddress.TryParse(ipAddressInput, out IPAddress? ipAddress))
+        {
+            ConsoleExt.WriteLine("Invalid IP address!", ConsoleColor.Red);
+            return;
+        }
+
+        NetworkSocket hostToRemove = new NetworkSocket(ipAddress.ToString(), port, DateTime.MinValue);
+
+        if (!hostsManager.Contains(hostToRemove))
+        {
+            ConsoleExt.WriteLine("Host not in list", ConsoleColor.Red);
+            return;
+        }
+
+        hostsManager.Remove(new NetworkSocket(ipAddress.ToString(), port, DateTime.MinValue), true);
+        ConsoleExt.WriteLine($"Successfully Removed host!", ConsoleColor.Green);
     }
 
     public void AddHost(string args)

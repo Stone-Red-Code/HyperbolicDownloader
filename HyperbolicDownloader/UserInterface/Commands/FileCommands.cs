@@ -39,7 +39,7 @@ internal class FileCommands
 
         if (filesManager.TryRemove(hash))
         {
-            ConsoleExt.WriteLine($"Removed file successfully!", ConsoleColor.Green);
+            ConsoleExt.WriteLine($"Successfully removed file!", ConsoleColor.Green);
         }
         else
         {
