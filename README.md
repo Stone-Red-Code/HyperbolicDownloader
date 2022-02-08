@@ -2,6 +2,32 @@
 
 > A cross-platform P2P file sharing CLI client
 
+## Usage
+
+1. Download one of the [releases](https://github.com/Stone-Red-Code/HyperbolicDownloader/releases)
+1. Exacute the `HyperbolicDownloader` file
+1. Wait until the setup process is finished
+1. Do one of the below
+    - Add a host to your client using the [add](#add) command and use the [get](#get) command tho retrive a file
+    - Use the [get from](https://github.com/Stone-Red-Code/HyperbolicDownloader#getfrom) command to retrive a file trough a `.hyper` file
+
+## How it works
+
+HyperbolicDownloader can retrieve files from other computers (aka hosts) using a SHA 512 hash.
+The client checks all known hosts to see if it could find the requested file. If one of the hosts has the requested file, it immediately downloads it.
+After the file is completely downloaded, it is validated by comparing the hash entered with that of the file received. If the hash does not match, you will receive a warning message and you can download the file again if needed.\
+This makes it very difficult to tamper with requested files, as long as the source from which you obtain the hash/`.hpyer` file is trusted.
+
+You can generate `.hyper` files with your client using the [generate](https://github.com/Stone-Red-Code/HyperbolicDownloader#generate). command\
+These files contain the hash value of the actual file and the hosts that should have the requested file.
+You can use the [get from](https://github.com/Stone-Red-Code/HyperbolicDownloader#getfrom) command to retrieve the file or if you are using Windows you can right-click the `.hyper` file, select `open with` and select the HyperbolicDownloader executable.
+
+
+## Disclaimer
+
+Keep in mind that all network traffic is not encrypted. So, do not send sensitive information with HyperbolicDownloader.
+Since none of the files are stored anywhere centralized, the quality of the files cannot be controlled. Therefore, pay attention to what you download.
+
 ## Commands
 
 > Most commands have aliases (separated by `|`)\
@@ -90,12 +116,13 @@
 **Description:** Attempts to retrieve a file from another host using a hash.\
 **parameter:** `<FileHash>`
 
+<a name="#getfrom"></a>
 #### `<get> from`
 
 **Description:** Attempts to retrieve a file from another host using a .hyper file.\
 **Parameter:** `<FilePathToHyperFile>`
 
-
+<a name="#generate"></a>
 ### `generate` | `gen`
 
 **Description:** Generates a .hyper file from a file hash.\
