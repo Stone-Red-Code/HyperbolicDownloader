@@ -1,53 +1,49 @@
 ﻿using Commander_Net;
 
 using HyperbolicDownloader.FileProcessing;
-using HyperbolicDownloader.Networking;
+using HyperbolicDownloader.UserInterface.Commands;
 
 using Stone_Red_Utilities.ConsoleExtentions;
-using Stone_Red_Utilities.StringExtentions;
-
-using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Text.Json;
 
 namespace HyperbolicDownloader.UserInterface;
 
 internal class InputHandler
 {
     private readonly HostsManager hostsManager;
-    private readonly FilesManager filesManager;
     private readonly Commander commander = new Commander();
     private bool exit = false;
 
     public InputHandler(HostsManager hostsManager, FilesManager filesManager)
     {
+        HostCommands hostCommands = new HostCommands(hostsManager);
+        FileCommands fileCommands = new FileCommands(hostsManager, filesManager);
+        DownloadCommands downloadCommands = new DownloadCommands(hostsManager, filesManager);
+        ClientCommands clientCommands = new ClientCommands();
+
         this.hostsManager = hostsManager;
+
         commander.Register((_) => Console.Clear(), "clear", "cls");
         commander.Register(Exit, "exit", "quit");
-        commander.Register(ShowInfo, "info", "inf");
-        commander.Register(Discover, "discover", "disc");
+        commander.Register(clientCommands.ShowInfo, "info", "inf");
+        commander.Register(hostCommands.Discover, "discover", "disc");
 
-        Command getCommand = commander.Register(GetFile, "get");
-        getCommand.Register(GetFileFrom, "from");
+        Command getCommand = commander.Register(downloadCommands.GetFile, "get");
+        getCommand.Register(downloadCommands.GetFileFrom, "from");
 
-        Command generateCommad = commander.Register(GenerateFileFull, "generate", "gen");
-        generateCommad.Register(GenerateFileSingle, "noscan");
+        Command generateCommad = commander.Register(fileCommands.GenerateFileFull, "generate", "gen");
+        generateCommad.Register(fileCommands.GenerateFileSingle, "noscan");
 
-        Command addCommand = commander.Register(AddFile, "add");
-        addCommand.Register(AddHost, "host");
-        addCommand.Register(AddFile, "file");
+        Command addCommand = commander.Register(fileCommands.AddFile, "add");
+        addCommand.Register(hostCommands.AddHost, "host");
+        addCommand.Register(fileCommands.AddFile, "file");
 
-        commander.Register(RemoveFile, "remove", "rm");
+        commander.Register(fileCommands.RemoveFile, "remove", "rm");
 
-        Command listCommand = commander.Register(ListFiles, "list", "ls");
-        listCommand.Register(ListFiles, "files");
-        listCommand.Register(ListHosts, "hosts");
+        Command listCommand = commander.Register(fileCommands.ListFiles, "list", "ls");
+        listCommand.Register(fileCommands.ListFiles, "files");
+        listCommand.Register(hostCommands.ListHosts, "hosts");
 
-        commander.Register(CheckActiveHosts, "status", "check");
-
-        this.filesManager = filesManager;
+        commander.Register(hostCommands.CheckActiveHosts, "status", "check");
     }
 
     public void ReadInput()
@@ -68,475 +64,9 @@ internal class InputHandler
         }
     }
 
-    private void AddHost(string args)
-    {
-        string[] parts = args.Split(":");
-
-        if (parts.Length != 2)
-        {
-            ConsoleExt.WriteLine("Invalid format! Use this format: (xxx.xxx.xxx.xxx:yyyy)", ConsoleColor.Red);
-            return;
-        }
-
-        string ipAddressInput = parts[0];
-        string portInput = parts[1];
-
-        _ = int.TryParse(portInput, out int port);
-        if (port < 1000 || port >= 6000)
-        {
-            ConsoleExt.WriteLine("Invalid port number!", ConsoleColor.Red);
-        }
-        else if (IPAddress.TryParse(ipAddressInput, out IPAddress? ipAddress))
-        {
-            try
-            {
-                Console.WriteLine("Waiting for response...");
-                NetworkSocket? localSocket = Program.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0, DateTime.MinValue);
-                List<NetworkSocket>? recivedHosts = NetworkClient.Send<List<NetworkSocket>>(ipAddress, port, "GetHostsList", localSocket);
-
-                if (recivedHosts is not null)
-                {
-                    ConsoleExt.WriteLine($"Success! Added {recivedHosts.Count} new host(s).", ConsoleColor.Green);
-                    hostsManager.AddRange(recivedHosts);
-                }
-                else
-                {
-                    ConsoleExt.WriteLine($"Invalid response!", ConsoleColor.Red);
-                }
-            }
-            catch (SocketException ex)
-            {
-                ConsoleExt.WriteLine($"Invalid host! Error message: {ex.Message}", ConsoleColor.Red);
-            }
-            catch (IOException ex)
-            {
-                ConsoleExt.WriteLine($"Invalid host! Error message: {ex.Message}", ConsoleColor.Red);
-            }
-        }
-        else
-        {
-            ConsoleExt.WriteLine("Invalid IP address!", ConsoleColor.Red);
-        }
-    }
-
-    private void AddFile(string path)
-    {
-        if (filesManager.TryAdd(path, out PrivateHyperFileInfo? fileInfo, out string? message))
-        {
-            ConsoleExt.WriteLine($"Added file: {fileInfo!.FilePath}", ConsoleColor.Green);
-            Console.WriteLine($"Hash: {fileInfo.Hash}");
-        }
-        else
-        {
-            ConsoleExt.WriteLine(message, ConsoleColor.Red);
-        }
-    }
-
-    private void RemoveFile(string hash)
-    {
-        hash = hash.Trim().ToLower();
-
-        if (filesManager.TryRemove(hash))
-        {
-            ConsoleExt.WriteLine($"Removed file successfully!", ConsoleColor.Green);
-        }
-        else
-        {
-            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
-        }
-    }
-
-    private void ListFiles(string _)
-    {
-        int index = 0;
-        foreach (PrivateHyperFileInfo fileInfo in filesManager.ToList())
-        {
-            index++;
-            Console.WriteLine($"{index}) {fileInfo.FilePath}");
-            Console.WriteLine($"Hash: {fileInfo.Hash}");
-            Console.WriteLine();
-        }
-        Console.CursorTop--;
-    }
-
-    private void ListHosts(string _)
-    {
-        int index = 0;
-        foreach (NetworkSocket host in hostsManager.ToList())
-        {
-            index++;
-            Console.WriteLine($"{index}) {host.IPAddress}:{host.Port}");
-            Console.WriteLine($"Last active: {host.LastActive}");
-            Console.WriteLine();
-        }
-        Console.CursorTop--;
-    }
-
-    private void ShowInfo(string _)
-    {
-        if (Program.PublicIpAddress is not null)
-        {
-            ConsoleExt.WriteLine($"The public IP address is: {Program.PublicIpAddress}", ConsoleColor.Green);
-            ConsoleExt.WriteLine($"The public port is: {Program.PublicPort}", ConsoleColor.Green);
-            Console.WriteLine();
-        }
-
-        ConsoleExt.WriteLine($"The private IP address is: {NetworkUtilities.GetIP4Adress()}", ConsoleColor.Green);
-        ConsoleExt.WriteLine($"The private port is: {Program.PrivatePort}", ConsoleColor.Green);
-    }
-
-    private void Discover(string _)
-    {
-        Console.WriteLine("Running local discovery routine...");
-        BroadcastClient.Send(Program.BroadcastPort, Program.PrivatePort.ToString());
-        Thread.Sleep(3000);
-    }
-
-    private void CheckActiveHosts(string _)
-    {
-        int activeHostsCount = hostsManager.CheckHostsActivity();
-        if (activeHostsCount == 0)
-        {
-            ConsoleExt.WriteLine("No active hosts found!", ConsoleColor.Red);
-            ConsoleExt.WriteLine("Use 'add host xxx.xxx.xxx.xxx:yyyy' to add a new host.", ConsoleColor.Red);
-        }
-
-        Console.WriteLine($"{hostsManager.Count} known host(s).");
-        Console.WriteLine($"{activeHostsCount} active host(s).");
-    }
-
     private void Exit(string _)
     {
         hostsManager.SaveHosts();
         exit = true;
-    }
-
-    private void GenerateFileSingle(string hash)
-    {
-        string directoryPath = Path.Combine(Program.BasePath, "GeneratedFiles");
-        if (!Directory.Exists(directoryPath))
-        {
-            Directory.CreateDirectory(directoryPath);
-        }
-
-        hash = hash.Trim().ToLower();
-
-        if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
-        {
-            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
-            return;
-        }
-
-        string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
-        string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
-
-        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
-
-        NetworkSocket? localHost = Program.GetLocalSocket();
-        if (localHost is null)
-        {
-            ConsoleExt.WriteLine("Network error!", ConsoleColor.Red);
-            return;
-        }
-
-        publicHyperFileInfo.Hosts.Add(localHost);
-
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-        string json = JsonSerializer.Serialize(publicHyperFileInfo, options);
-
-        File.WriteAllText(filePath, json);
-
-        ConsoleExt.WriteLine("Done", ConsoleColor.Green);
-        Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
-    }
-
-    private void GenerateFileFull(string hash)
-    {
-        string directoryPath = Path.Combine(Program.BasePath, "GeneratedFiles");
-        if (!Directory.Exists(directoryPath))
-        {
-            Directory.CreateDirectory(directoryPath);
-        }
-
-        hash = hash.Trim().ToLower();
-
-        if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
-        {
-            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
-            return;
-        }
-
-        string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
-        string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
-
-        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
-
-        NetworkSocket? localHost = Program.GetLocalSocket();
-        if (localHost is null)
-        {
-            ConsoleExt.WriteLine("Network error!", ConsoleColor.Red);
-            return;
-        }
-
-        foreach (NetworkSocket host in hostsManager.ToList())
-        {
-            bool validIpAdress = IPAddress.TryParse(host.IPAddress, out IPAddress? ipAddress);
-
-            if (!validIpAdress)
-            {
-                hostsManager.Remove(host, true);
-                continue;
-            }
-
-            ConsoleExt.Write($"{host.IPAddress}:{host.Port} > ???", ConsoleColor.DarkYellow);
-
-            Console.CursorLeft = 0;
-
-            Task<bool> sendTask = NetworkClient.SendAsync<bool>(ipAddress!, host.Port, "HasFile", hash);
-
-            _ = sendTask.Wait(1000);
-
-            if (!sendTask.IsCompletedSuccessfully)
-            {
-                Console.CursorLeft = 0;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
-
-                hostsManager.Remove(host);
-                continue;
-            }
-            else if (!sendTask.Result)
-            {
-                host.LastActive = DateTime.Now;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", ConsoleColor.Red);
-                continue;
-            }
-
-            host.LastActive = DateTime.Now;
-
-            ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Has the requested file", ConsoleColor.Green);
-            publicHyperFileInfo.Hosts.Add(host);
-        }
-
-        publicHyperFileInfo.Hosts.Add(localHost);
-
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-        string json = JsonSerializer.Serialize(publicHyperFileInfo, options);
-
-        File.WriteAllText(filePath, json);
-
-        ConsoleExt.WriteLine("Done", ConsoleColor.Green);
-        Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
-    }
-
-    public void GetFileFrom(string path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            ConsoleExt.WriteLine("Path is empty!", ConsoleColor.Red);
-            return;
-        }
-
-        string fullPath = Path.GetFullPath(path);
-
-        if (!File.Exists(fullPath))
-        {
-            ConsoleExt.WriteLine("Invalid file path!", ConsoleColor.Red);
-        }
-
-        string json = File.ReadAllText(fullPath);
-
-        PublicHyperFileInfo? publicHyperFileInfo = JsonSerializer.Deserialize<PublicHyperFileInfo>(json);
-        if (publicHyperFileInfo == null)
-        {
-            ConsoleExt.WriteLine("Parsing file failed!", ConsoleColor.Red);
-            return;
-        }
-
-        hostsManager.AddRange(publicHyperFileInfo.Hosts);
-        GetFile(publicHyperFileInfo.Hash);
-    }
-
-    private void GetFile(string hash)
-    {
-        if (string.IsNullOrEmpty(hash))
-        {
-            ConsoleExt.WriteLine("No hash value specified!", ConsoleColor.Red);
-            return;
-        }
-
-        hash = hash.Trim().ToLower();
-
-        foreach (NetworkSocket host in hostsManager.ToList())
-        {
-            bool validIpAdress = IPAddress.TryParse(host.IPAddress, out IPAddress? ipAddress);
-
-            if (!validIpAdress)
-            {
-                hostsManager.Remove(host, true);
-                continue;
-            }
-
-            ConsoleExt.Write($"{host.IPAddress}:{host.Port} > ???", ConsoleColor.DarkYellow);
-
-            Console.CursorLeft = 0;
-
-            Task<bool> sendTask = NetworkClient.SendAsync<bool>(ipAddress!, host.Port, "HasFile", hash);
-
-            _ = sendTask.Wait(1000);
-
-            if (!sendTask.IsCompletedSuccessfully)
-            {
-                Console.CursorLeft = 0;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
-
-                hostsManager.Remove(host);
-                continue;
-            }
-            else if (!sendTask.Result)
-            {
-                host.LastActive = DateTime.Now;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", ConsoleColor.Red);
-                continue;
-            }
-
-            host.LastActive = DateTime.Now;
-
-            ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Has the requested file", ConsoleColor.Green);
-            Console.WriteLine("Requesting file...");
-
-            using TcpClient tcpClient = new TcpClient();
-            tcpClient.Connect(ipAddress!, host.Port);
-            tcpClient.ReceiveBufferSize = 64000;
-
-            NetworkStream nwStream = tcpClient.GetStream();
-            byte[] buffer = new byte[tcpClient.ReceiveBufferSize];
-            byte[] reciveBuffer = new byte[64000];
-
-            byte[] bytesToSend = Encoding.ASCII.GetBytes($"Download {hash}");
-            nwStream.Write(bytesToSend);
-            nwStream.ReadTimeout = 30000;
-
-            int bytesRead;
-            try
-            {
-                bytesRead = nwStream.Read(buffer, 0, tcpClient.ReceiveBufferSize);
-            }
-            catch (IOException)
-            {
-                Console.WriteLine();
-                ConsoleExt.WriteLine("Lost connection to other host!", ConsoleColor.Red);
-                continue;
-            }
-
-            string dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-            string[] parts = dataReceived.Split('/');
-
-            if (parts.Length == 2) //If received data does not contain 2 parts -> error
-            {
-                bool validFileSize = int.TryParse(parts[0], out int fileSize);
-
-                if (!validFileSize || fileSize <= 0)
-                {
-                    ConsoleExt.WriteLine("Invalid file size!", ConsoleColor.Red);
-                    continue;
-                }
-
-                string fileName = parts[1].ToFileName();
-                string directoryPath = Path.Combine(Program.BasePath, "Downloads");
-                string filePath = Path.Combine(directoryPath, fileName);
-
-                Console.WriteLine($"File name: {fileName}");
-                Console.WriteLine($"Starting download...");
-
-                int totalBytesRead = 0;
-
-                if (!Directory.Exists(directoryPath))
-                {
-                    Directory.CreateDirectory(directoryPath);
-                }
-
-                using FileStream? fileStream = new FileStream(filePath, FileMode.Create);
-
-                int bytesInOneSecond = 0;
-                int unitsPerSecond = 0;
-                string unit = "Kb";
-
-                Stopwatch stopWatch = new Stopwatch();
-                stopWatch.Start();
-                while (totalBytesRead < fileSize)
-                {
-                    try
-                    {
-                        bytesRead = nwStream.Read(reciveBuffer, 0, reciveBuffer.Length);
-                    }
-                    catch (IOException)
-                    {
-                        Console.WriteLine();
-                        ConsoleExt.WriteLine("Lost connection to other host!", ConsoleColor.Red);
-                        break;
-                    }
-
-                    bytesRead = Math.Min(bytesRead, fileSize - totalBytesRead);
-
-                    fileStream.Write(reciveBuffer, 0, bytesRead);
-                    totalBytesRead += bytesRead;
-
-                    bytesInOneSecond += bytesRead;
-
-                    if (stopWatch.ElapsedMilliseconds >= 1000)
-                    {
-                        unitsPerSecond = (unitsPerSecond + bytesInOneSecond) / 2;
-                        if (unitsPerSecond > 125000)
-                        {
-                            unitsPerSecond /= 125000;
-                            unit = "Mb";
-                        }
-                        else
-                        {
-                            unitsPerSecond /= 125;
-                            unit = "Kb";
-                        }
-                        bytesInOneSecond = 0;
-                        stopWatch.Restart();
-                    }
-
-                    Console.CursorLeft = 0;
-
-                    Console.Out.WriteAsync($"Downloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
-                }
-
-                fileStream.Close();
-
-                if (totalBytesRead < fileSize)
-                {
-                    continue;
-                }
-
-                Console.WriteLine();
-
-                Console.WriteLine("Validating file...");
-                if (FileValidator.ValidateHash(filePath, hash))
-                {
-                    _ = filesManager.TryAdd(filePath, out _, out _);
-                }
-                else
-                {
-                    ConsoleExt.WriteLine("Warning: File hash does not match! File might me corrupted or manipulated!", ConsoleColor.DarkYellow);
-                }
-
-                Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
-                ConsoleExt.WriteLine("Done", ConsoleColor.Green);
-                stopWatch.Stop();
-                hostsManager.SaveHosts();
-                return;
-            }
-            else
-            {
-                ConsoleExt.WriteLine(dataReceived, ConsoleColor.Red);
-            }
-        }
-        ConsoleExt.WriteLine("None of the available hosts have the requested file!", ConsoleColor.Red);
-        hostsManager.SaveHosts();
     }
 }

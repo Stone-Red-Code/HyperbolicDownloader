@@ -55,7 +55,8 @@ internal static class Program
 
         if (args.Length > 0 && File.Exists(args[0]))
         {
-            inputHandler.GetFileFrom(args[0]);
+            UserInterface.Commands.DownloadCommands downloadCommands = new UserInterface.Commands.DownloadCommands(hostsManager, filesManager);
+            downloadCommands.GetFileFrom(args[0]);
             Console.WriteLine("Do you want to continue using this instance? [y/N]");
             if (char.ToLower(Console.ReadKey().KeyChar) != 'y')
             {
