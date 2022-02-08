@@ -5,7 +5,7 @@
 ## Commands
 
 > Most commands have aliases (separated by `|`)\
-> Some commands also have subcommands. `<command> subcommand` means that you can replace `<command>` with any version of the parent command
+> Some commands also have subcommands. `<command> subcommand` means that you can replace `<command>` with any version of the parent command.
 
 ### `exit` | `quit`
 
