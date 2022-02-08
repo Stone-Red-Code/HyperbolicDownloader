@@ -13,6 +13,9 @@
 
 ## How it works
 
+When you start the program, it first tries to open a public port via UPnP/NAT-PMP. If it succeeds, you can communicate with the client using the public IP address and port.
+If it is unable to find a UPnP/NAT-PMP device, you will need to manually set up port forwarding on your client's IP address to port "3055". The public port has to be between 1000 and 6000 here.
+
 HyperbolicDownloader can retrieve files from other computers (aka hosts) using a SHA 512 hash.
 The client checks all known hosts to see if it could find the requested file. If one of the hosts has the requested file, it immediately downloads it.
 After the file is completely downloaded, it is validated by comparing the hash entered with that of the file received. If the hash does not match, you will receive a warning message and you can download the file again if needed.\
