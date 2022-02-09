@@ -9,7 +9,7 @@
 1. Wait until the setup process is finished
 1. Do one of the below
     - Add a host to your client using the [add](#add) command and use the [get](#get) command tho retrive a file
-    - Use the [get from](https://github.com/Stone-Red-Code/HyperbolicDownloader#getfrom) command to retrive a file trough a `.hyper` file
+    - Use the [generate](https://github.com/Stone-Red-Code/HyperbolicDownloader#generate) command to generate a `.hyper` file and the [get from](https://github.com/Stone-Red-Code/HyperbolicDownloader#getfrom) command to retrive a file trough a `.hyper` file
 
 ## How it works
 
