@@ -32,6 +32,7 @@ internal class HostCommands
             ConsoleExt.WriteLine("Use 'add host xxx.xxx.xxx.xxx:yyyy' to add a new host.", ConsoleColor.Red);
         }
 
+        Console.WriteLine();
         Console.WriteLine($"{hostsManager.Count} known host(s).");
         Console.WriteLine($"{activeHostsCount} active host(s).");
     }
