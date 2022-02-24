@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-namespace HyperbolicDownloader
+namespace HyperbolicDownloaderApi
 {
     internal class MessageRecivedEventArgs<T> : EventArgs
     {

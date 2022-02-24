@@ -1,6 +1,6 @@
 ﻿using System.IO.Compression;
 
-namespace HyperbolicDownloader.FileProcessing;
+namespace HyperbolicDownloaderApi.FileProcessing;
 
 internal static class FileCompressor
 {

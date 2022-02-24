@@ -1,8 +1,10 @@
-﻿using System.Text.Json;
+﻿using HyperbolicDownloaderApi.Managment;
 
-namespace HyperbolicDownloader.FileProcessing;
+using System.Text.Json;
 
-internal class FilesManager
+namespace HyperbolicDownloaderApi.FileProcessing;
+
+public class FilesManager
 {
     private readonly List<PrivateHyperFileInfo> files = new List<PrivateHyperFileInfo>();
 
@@ -91,6 +93,6 @@ internal class FilesManager
 
     private void SaveFiles()
     {
-        File.WriteAllText(Program.FilesInfoPath, JsonSerializer.Serialize(files));
+        File.WriteAllText(ApiConfiguration.FilesInfoPath, JsonSerializer.Serialize(files));
     }
 }

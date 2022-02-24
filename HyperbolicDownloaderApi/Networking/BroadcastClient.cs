@@ -1,11 +1,11 @@
-﻿using Stone_Red_Utilities.ConsoleExtentions;
+﻿using HyperbolicDownloaderApi.Managment;
 
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 
-namespace HyperbolicDownloader.Networking;
+namespace HyperbolicDownloaderApi.Networking;
 
 internal class BroadcastClient
 {
@@ -26,7 +26,7 @@ internal class BroadcastClient
 
         if (ip4Address is null)
         {
-            ConsoleExt.WriteLine("Could not find suitable network adapter!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("Could not find suitable network adapter!", NotificationMessageType.Error);
             return;
         }
 
@@ -34,7 +34,7 @@ internal class BroadcastClient
 
         if (addressInformation is null)
         {
-            ConsoleExt.WriteLine("Could not find suitable network adapter!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("Could not find suitable network adapter!", NotificationMessageType.Error);
             return;
         }
 
@@ -48,7 +48,7 @@ internal class BroadcastClient
 
     public void StartListening(int port)
     {
-        if (IsListening == true)
+        if (IsListening)
         {
             throw new InvalidOperationException("Already listening!");
         }

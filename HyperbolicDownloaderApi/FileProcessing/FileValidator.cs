@@ -1,8 +1,8 @@
 ﻿using System.Security.Cryptography;
 
-namespace HyperbolicDownloader.FileProcessing;
+namespace HyperbolicDownloaderApi.FileProcessing;
 
-internal class FileValidator
+internal static class FileValidator
 {
     public static async Task<string> CalculateHashAsync(string filePath)
     {

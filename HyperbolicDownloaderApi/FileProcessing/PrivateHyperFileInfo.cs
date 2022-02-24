@@ -1,6 +1,6 @@
-﻿namespace HyperbolicDownloader.FileProcessing;
+﻿namespace HyperbolicDownloaderApi.FileProcessing;
 
-internal class PrivateHyperFileInfo
+public class PrivateHyperFileInfo
 {
     public string Hash { get; set; }
     public string FilePath { get; set; }

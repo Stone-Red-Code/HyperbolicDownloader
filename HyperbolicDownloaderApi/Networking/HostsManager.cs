@@ -1,13 +1,12 @@
-﻿using HyperbolicDownloader.Networking;
-
-using Stone_Red_Utilities.ConsoleExtentions;
+﻿using HyperbolicDownloaderApi.Managment;
+using HyperbolicDownloaderApi.Networking;
 
 using System.Net.Sockets;
 using System.Text.Json;
 
-namespace HyperbolicDownloader;
+namespace HyperbolicDownloaderApi;
 
-internal class HostsManager
+public class HostsManager
 {
     private List<NetworkSocket> hosts = new List<NetworkSocket>();
     public int Count => hosts.Count;
@@ -54,7 +53,7 @@ internal class HostsManager
         int activeHostsCount = 0;
         foreach (NetworkSocket host in hosts)
         {
-            ConsoleExt.Write($"{host.IPAddress}:{host.Port} > ???", ConsoleColor.DarkYellow);
+            ApiManager.SendMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
             using TcpClient tcpClient = new TcpClient();
 
             try
@@ -63,7 +62,7 @@ internal class HostsManager
                 Console.CursorLeft = 0;
                 if (tcpClient.Connected)
                 {
-                    ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Active", ConsoleColor.Green);
+                    ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Active", NotificationMessageType.Success);
                     host.LastActive = DateTime.Now;
                     activeHostsCount++;
                 }
@@ -73,7 +72,7 @@ internal class HostsManager
                     {
                         hostsToRemove.Add(host);
                     }
-                    ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
+                    ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
                 }
             }
             catch
@@ -83,7 +82,7 @@ internal class HostsManager
                     hostsToRemove.Add(host);
                 }
                 Console.CursorLeft = 0;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
+                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
             }
         }
 
@@ -104,6 +103,6 @@ internal class HostsManager
     public void SaveHosts()
     {
         hosts = hosts.OrderByDescending(h => h.LastActive).ToList();
-        File.WriteAllText(Program.HostsFilePath, JsonSerializer.Serialize(hosts));
+        File.WriteAllText(ApiConfiguration.HostsFilePath, JsonSerializer.Serialize(hosts));
     }
 }

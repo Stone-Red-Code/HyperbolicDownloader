@@ -2,9 +2,9 @@
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace HyperbolicDownloader.Networking;
+namespace HyperbolicDownloaderApi.Networking;
 
-internal static class NetworkUtilities
+public static class NetworkUtilities
 {
     public static UnicastIPAddressInformation? GetUnicastIPAddressInformation(IPAddress address)
     {

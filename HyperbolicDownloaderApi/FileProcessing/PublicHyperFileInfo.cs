@@ -1,8 +1,8 @@
-﻿using HyperbolicDownloader.Networking;
+﻿using HyperbolicDownloaderApi.Networking;
 
-namespace HyperbolicDownloader.FileProcessing;
+namespace HyperbolicDownloaderApi.FileProcessing;
 
-internal class PublicHyperFileInfo
+public class PublicHyperFileInfo
 {
     public string Hash { get; set; } = string.Empty;
     public List<NetworkSocket> Hosts { get; set; } = new();

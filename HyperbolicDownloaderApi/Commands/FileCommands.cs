@@ -1,14 +1,13 @@
-﻿using HyperbolicDownloader.FileProcessing;
-using HyperbolicDownloader.Networking;
-
-using Stone_Red_Utilities.ConsoleExtentions;
+﻿using HyperbolicDownloaderApi.FileProcessing;
+using HyperbolicDownloaderApi.Managment;
+using HyperbolicDownloaderApi.Networking;
 
 using System.Net;
 using System.Text.Json;
 
-namespace HyperbolicDownloader.UserInterface.Commands;
+namespace HyperbolicDownloaderApi.Commands;
 
-internal class FileCommands
+public class FileCommands
 {
     private readonly HostsManager hostsManager;
 
@@ -24,12 +23,12 @@ internal class FileCommands
     {
         if (filesManager.TryAdd(path, out PrivateHyperFileInfo? fileInfo, out string? message))
         {
-            ConsoleExt.WriteLine($"Added file: {fileInfo!.FilePath}", ConsoleColor.Green);
-            Console.WriteLine($"Hash: {fileInfo.Hash}");
+            ApiManager.SendMessageNewLine($"Added file: {fileInfo!.FilePath}", NotificationMessageType.Success);
+            ApiManager.SendMessageNewLine($"Hash: {fileInfo.Hash}");
         }
         else
         {
-            ConsoleExt.WriteLine(message, ConsoleColor.Red);
+            ApiManager.SendMessageNewLine(message, NotificationMessageType.Error);
         }
     }
 
@@ -39,11 +38,11 @@ internal class FileCommands
 
         if (filesManager.TryRemove(hash))
         {
-            ConsoleExt.WriteLine($"Successfully removed file!", ConsoleColor.Green);
+            ApiManager.SendMessageNewLine($"Successfully removed file!", NotificationMessageType.Success);
         }
         else
         {
-            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
         }
     }
 
@@ -54,23 +53,23 @@ internal class FileCommands
 
         if (fileInfos.Count == 0)
         {
-            ConsoleExt.WriteLine("No tracked files!", ConsoleColor.DarkYellow);
+            ApiManager.SendMessageNewLine("No tracked files!", NotificationMessageType.Warning);
             return;
         }
 
         foreach (PrivateHyperFileInfo fileInfo in fileInfos)
         {
             index++;
-            Console.WriteLine($"{index}) {fileInfo.FilePath}");
-            Console.WriteLine($"Hash: {fileInfo.Hash}");
-            Console.WriteLine();
+            ApiManager.SendMessageNewLine($"{index}) {fileInfo.FilePath}");
+            ApiManager.SendMessageNewLine($"Hash: {fileInfo.Hash}");
+            ApiManager.SendMessageNewLine(string.Empty);
         }
         Console.CursorTop--;
     }
 
     public void GenerateFileSingle(string hash)
     {
-        string directoryPath = Path.Combine(Program.BasePath, "GeneratedFiles");
+        string directoryPath = Path.Combine(ApiConfiguration.BasePath, "GeneratedFiles");
         if (!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
@@ -80,7 +79,7 @@ internal class FileCommands
 
         if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
         {
-            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
             return;
         }
 
@@ -89,10 +88,10 @@ internal class FileCommands
 
         PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
 
-        NetworkSocket? localHost = Program.GetLocalSocket();
+        NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
         {
-            ConsoleExt.WriteLine("Network error!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("Network error!", NotificationMessageType.Error);
             return;
         }
 
@@ -103,13 +102,13 @@ internal class FileCommands
 
         File.WriteAllText(filePath, json);
 
-        ConsoleExt.WriteLine("Done", ConsoleColor.Green);
-        Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
+        ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
+        ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
     }
 
     public void GenerateFileFull(string hash)
     {
-        string directoryPath = Path.Combine(Program.BasePath, "GeneratedFiles");
+        string directoryPath = Path.Combine(ApiConfiguration.BasePath, "GeneratedFiles");
         if (!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
@@ -119,7 +118,7 @@ internal class FileCommands
 
         if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
         {
-            ConsoleExt.WriteLine("The file is not being tracked!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
             return;
         }
 
@@ -128,10 +127,10 @@ internal class FileCommands
 
         PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
 
-        NetworkSocket? localHost = Program.GetLocalSocket();
+        NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
         {
-            ConsoleExt.WriteLine("Network error!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("Network error!", NotificationMessageType.Error);
             return;
         }
 
@@ -145,7 +144,7 @@ internal class FileCommands
                 continue;
             }
 
-            ConsoleExt.Write($"{host.IPAddress}:{host.Port} > ???", ConsoleColor.DarkYellow);
+            ApiManager.SendMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
 
             Console.CursorLeft = 0;
 
@@ -156,7 +155,7 @@ internal class FileCommands
             if (!sendTask.IsCompletedSuccessfully)
             {
                 Console.CursorLeft = 0;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
+                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
 
                 hostsManager.Remove(host);
                 continue;
@@ -164,13 +163,13 @@ internal class FileCommands
             else if (!sendTask.Result)
             {
                 host.LastActive = DateTime.Now;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", ConsoleColor.Red);
+                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", NotificationMessageType.Error);
                 continue;
             }
 
             host.LastActive = DateTime.Now;
 
-            ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Has the requested file", ConsoleColor.Green);
+            ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Has the requested file", NotificationMessageType.Success);
             publicHyperFileInfo.Hosts.Add(host);
         }
 
@@ -181,7 +180,7 @@ internal class FileCommands
 
         File.WriteAllText(filePath, json);
 
-        ConsoleExt.WriteLine("Done", ConsoleColor.Green);
-        Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
+        ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
+        ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
     }
 }

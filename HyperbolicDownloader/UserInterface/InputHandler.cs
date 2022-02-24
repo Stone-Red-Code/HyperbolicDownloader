@@ -1,11 +1,11 @@
 ﻿using Commander_Net;
 
-using HyperbolicDownloader.FileProcessing;
-using HyperbolicDownloader.UserInterface.Commands;
+using HyperbolicDownloaderApi.Commands;
+using HyperbolicDownloaderApi.FileProcessing;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 
-namespace HyperbolicDownloader.UserInterface;
+namespace HyperbolicDownloaderApi.UserInterface;
 
 internal class InputHandler
 {

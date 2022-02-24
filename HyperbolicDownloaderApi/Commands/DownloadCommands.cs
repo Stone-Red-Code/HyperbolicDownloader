@@ -1,7 +1,7 @@
-﻿using HyperbolicDownloader.FileProcessing;
-using HyperbolicDownloader.Networking;
+﻿using HyperbolicDownloaderApi.FileProcessing;
+using HyperbolicDownloaderApi.Managment;
+using HyperbolicDownloaderApi.Networking;
 
-using Stone_Red_Utilities.ConsoleExtentions;
 using Stone_Red_Utilities.StringExtentions;
 
 using System.Diagnostics;
@@ -10,9 +10,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-namespace HyperbolicDownloader.UserInterface.Commands;
+namespace HyperbolicDownloaderApi.Commands;
 
-internal class DownloadCommands
+public class DownloadCommands
 {
     private readonly HostsManager hostsManager;
     private readonly FilesManager filesManager;
@@ -27,7 +27,7 @@ internal class DownloadCommands
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            ConsoleExt.WriteLine("Path is empty!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("Path is empty!", NotificationMessageType.Error);
             return;
         }
 
@@ -35,7 +35,7 @@ internal class DownloadCommands
 
         if (!File.Exists(fullPath))
         {
-            ConsoleExt.WriteLine("Invalid file path!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("Invalid file path!", NotificationMessageType.Error);
         }
 
         string json = File.ReadAllText(fullPath);
@@ -43,7 +43,7 @@ internal class DownloadCommands
         PublicHyperFileInfo? publicHyperFileInfo = JsonSerializer.Deserialize<PublicHyperFileInfo>(json);
         if (publicHyperFileInfo == null)
         {
-            ConsoleExt.WriteLine("Parsing file failed!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("Parsing file failed!", NotificationMessageType.Error);
             return;
         }
 
@@ -55,7 +55,7 @@ internal class DownloadCommands
     {
         if (string.IsNullOrEmpty(hash))
         {
-            ConsoleExt.WriteLine("No hash value specified!", ConsoleColor.Red);
+            ApiManager.SendMessageNewLine("No hash value specified!", NotificationMessageType.Error);
             return;
         }
 
@@ -71,7 +71,7 @@ internal class DownloadCommands
                 continue;
             }
 
-            ConsoleExt.Write($"{host.IPAddress}:{host.Port} > ???", ConsoleColor.DarkYellow);
+            ApiManager.SendMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
 
             Console.CursorLeft = 0;
 
@@ -82,7 +82,7 @@ internal class DownloadCommands
             if (!sendTask.IsCompletedSuccessfully)
             {
                 Console.CursorLeft = 0;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Inactive", ConsoleColor.Red);
+                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
 
                 hostsManager.Remove(host);
                 continue;
@@ -90,14 +90,14 @@ internal class DownloadCommands
             else if (!sendTask.Result)
             {
                 host.LastActive = DateTime.Now;
-                ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", ConsoleColor.Red);
+                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", NotificationMessageType.Error);
                 continue;
             }
 
             host.LastActive = DateTime.Now;
 
-            ConsoleExt.WriteLine($"{host.IPAddress}:{host.Port} > Has the requested file", ConsoleColor.Green);
-            Console.WriteLine("Requesting file...");
+            ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Has the requested file", NotificationMessageType.Success);
+            ApiManager.SendMessageNewLine("Requesting file...");
 
             using TcpClient tcpClient = new TcpClient();
             tcpClient.Connect(ipAddress!, host.Port);
@@ -118,8 +118,8 @@ internal class DownloadCommands
             }
             catch (IOException)
             {
-                Console.WriteLine();
-                ConsoleExt.WriteLine("Lost connection to other host!", ConsoleColor.Red);
+                ApiManager.SendMessageNewLine(string.Empty);
+                ApiManager.SendMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
                 continue;
             }
 
@@ -133,16 +133,16 @@ internal class DownloadCommands
 
                 if (!validFileSize || fileSize <= 0)
                 {
-                    ConsoleExt.WriteLine("Invalid file size!", ConsoleColor.Red);
+                    ApiManager.SendMessageNewLine("Invalid file size!", NotificationMessageType.Error);
                     continue;
                 }
 
                 string fileName = parts[1].ToFileName();
-                string directoryPath = Path.Combine(Program.BasePath, "Downloads");
+                string directoryPath = Path.Combine(ApiConfiguration.BasePath, "Downloads");
                 string filePath = Path.Combine(directoryPath, fileName);
 
-                Console.WriteLine($"File name: {fileName}");
-                Console.WriteLine($"Starting download...");
+                ApiManager.SendMessageNewLine($"File name: {fileName}");
+                ApiManager.SendMessageNewLine($"Starting download...");
 
                 int totalBytesRead = 0;
 
@@ -167,8 +167,8 @@ internal class DownloadCommands
                     }
                     catch (IOException)
                     {
-                        Console.WriteLine();
-                        ConsoleExt.WriteLine("Lost connection to other host!", ConsoleColor.Red);
+                        ApiManager.SendMessageNewLine(string.Empty);
+                        ApiManager.SendMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
                         break;
                     }
 
@@ -196,9 +196,7 @@ internal class DownloadCommands
                         stopWatch.Restart();
                     }
 
-                    Console.CursorLeft = 0;
-
-                    Console.Out.WriteAsync($"Downloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
+                    ApiManager.SendMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
                 }
 
                 fileStream.Close();
@@ -208,30 +206,30 @@ internal class DownloadCommands
                     continue;
                 }
 
-                Console.WriteLine();
+                ApiManager.SendMessageNewLine(string.Empty);
 
-                Console.WriteLine("Validating file...");
+                ApiManager.SendMessageNewLine("Validating file...");
                 if (FileValidator.ValidateHash(filePath, hash))
                 {
                     _ = filesManager.TryAdd(filePath, out _, out _);
                 }
                 else
                 {
-                    ConsoleExt.WriteLine("Warning: File hash does not match! File might me corrupted or manipulated!", ConsoleColor.DarkYellow);
+                    ApiManager.SendMessageNewLine("Warning: File hash does not match! File might me corrupted or manipulated!", NotificationMessageType.Warning);
                 }
 
-                Console.WriteLine($"File saved at: {Path.GetFullPath(filePath)}");
-                ConsoleExt.WriteLine("Done", ConsoleColor.Green);
+                ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
+                ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
                 stopWatch.Stop();
                 hostsManager.SaveHosts();
                 return;
             }
             else
             {
-                ConsoleExt.WriteLine(dataReceived, ConsoleColor.Red);
+                ApiManager.SendMessageNewLine(dataReceived, NotificationMessageType.Error);
             }
         }
-        ConsoleExt.WriteLine("None of the available hosts have the requested file!", ConsoleColor.Red);
+        ApiManager.SendMessageNewLine("None of the available hosts have the requested file!", NotificationMessageType.Error);
         hostsManager.SaveHosts();
     }
 }

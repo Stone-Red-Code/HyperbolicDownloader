@@ -1,4 +1,4 @@
-﻿using HyperbolicDownloader.FileProcessing;
+﻿using HyperbolicDownloaderApi.FileProcessing;
 
 using System.Diagnostics;
 using System.Net;
@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-namespace HyperbolicDownloader.Networking
+namespace HyperbolicDownloaderApi.Networking
 {
     internal class NetworkClient
     {
