@@ -98,7 +98,7 @@ Since none of the files are stored anywhere centralized, the quality of the file
 **parameter:** `<IpAddress:port>`
 
 
-### `remove` `rm`
+### `remove` | `rm`
 
 **Description:** Removes a file from the tracking list.\
 **parameter:** `<FileHash>`
