@@ -84,7 +84,7 @@ internal static class Program
     {
         switch (e.NotificationMessageType)
         {
-            case NotificationMessageType.Raw: Console.Write(e.Message); break;
+            case NotificationMessageType.Info: Console.Write(e.Message); break;
             case NotificationMessageType.Success: ConsoleExt.Write(e.Message, ConsoleColor.Green); break;
             case NotificationMessageType.Warning: ConsoleExt.Write(e.Message, ConsoleColor.DarkYellow); break;
             case NotificationMessageType.Error: ConsoleExt.Write(e.Message, ConsoleColor.Red); break;

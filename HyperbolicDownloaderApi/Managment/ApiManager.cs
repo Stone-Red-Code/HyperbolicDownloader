@@ -28,32 +28,6 @@ public class ApiManager
         networkClient = new(FilesManager);
     }
 
-    public static void ClosePorts()
-    {
-        ApiManager.SendMessageNewLine("Closing ports...", NotificationMessageType.Success);
-        if (device is not null)
-        {
-            try
-            {
-                IEnumerable<Mapping>? mappings = device.GetAllMappingsAsync().GetAwaiter().GetResult();
-                foreach (Mapping? mapping in mappings)
-                {
-                    if (mapping.Description.Contains("HyperbolicDowloader") && mapping.PrivateIP.ToString() == portMapping?.PrivateIP.ToString())
-                    {
-                        device.DeletePortMapAsync(mapping).GetAwaiter().GetResult();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ApiManager.SendMessageNewLine(ex.ToString(), NotificationMessageType.Error);
-            }
-        }
-
-        ApiManager.SendMessageNewLine("Ports closed!", NotificationMessageType.Warning);
-        Environment.Exit(0);
-    }
-
     public static NetworkSocket? GetLocalSocket()
     {
         int port = ApiConfiguration.PublicPort;
@@ -88,25 +62,51 @@ public class ApiManager
             device = await discoverer.DiscoverDeviceAsync();
 
             IPAddress? ip = await device.GetExternalIPAsync();
-            ApiManager.SendMessageNewLine($"The public IP address is: {ip} ", NotificationMessageType.Success);
+            SendMessageNewLine($"The public IP address is: {ip} ", NotificationMessageType.Success);
 
             portMapping = new Mapping(Protocol.Tcp, ApiConfiguration.PrivatePort, ApiConfiguration.PublicPort, "HyperbolicDowloader");
 
             await device.CreatePortMapAsync(portMapping);
 
-            ApiManager.SendMessageNewLine($"The public port is: {ApiConfiguration.PublicPort}", NotificationMessageType.Success);
+            SendMessageNewLine($"The public port is: {ApiConfiguration.PublicPort}", NotificationMessageType.Success);
             return true;
         }
         catch (NatDeviceNotFoundException)
         {
-            ApiManager.SendMessageNewLine($"Could not find a UPnP or NAT-PMP device!", NotificationMessageType.Error);
+            SendMessageNewLine($"Could not find a UPnP or NAT-PMP device!", NotificationMessageType.Error);
             return false;
         }
         catch (MappingException ex)
         {
-            ApiManager.SendMessageNewLine($"An error occurred while mapping the private port ({ApiConfiguration.PrivatePort}) to the public port ({ApiConfiguration.PublicPort})! Error message: {ex.Message}", NotificationMessageType.Error);
+            SendMessageNewLine($"An error occurred while mapping the private port ({ApiConfiguration.PrivatePort}) to the public port ({ApiConfiguration.PublicPort})! Error message: {ex.Message}", NotificationMessageType.Error);
             return false;
         }
+    }
+
+    public static void ClosePorts()
+    {
+        SendMessageNewLine("Closing ports...", NotificationMessageType.Info);
+        if (device is not null)
+        {
+            try
+            {
+                IEnumerable<Mapping>? mappings = device.GetAllMappingsAsync().GetAwaiter().GetResult();
+                foreach (Mapping? mapping in mappings)
+                {
+                    if (mapping.Description.Contains("HyperbolicDowloader") && mapping.PrivateIP.ToString() == portMapping?.PrivateIP.ToString())
+                    {
+                        device.DeletePortMapAsync(mapping).GetAwaiter().GetResult();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SendMessageNewLine(ex.ToString(), NotificationMessageType.Error);
+            }
+        }
+
+        SendMessageNewLine("Ports closed!", NotificationMessageType.Warning);
+        Environment.Exit(0);
     }
 
     public void StartBroadcastListener()
@@ -127,7 +127,7 @@ public class ApiManager
         }
         catch (SocketException ex)
         {
-            ApiManager.SendMessageNewLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}", NotificationMessageType.Error); // net stop hns && net start hns
+            SendMessageNewLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}", NotificationMessageType.Error); // net stop hens && net start hns
             Console.ReadKey();
         }
     }
@@ -165,7 +165,7 @@ public class ApiManager
 
     private void DiscoverAnswer(object? sender, MessageRecivedEventArgs<List<NetworkSocket>> recivedEventArgs)
     {
-        ApiManager.SendMessageNewLine($"Received answer from {recivedEventArgs.IpAddress}. Returned {recivedEventArgs.Data.Count} host(s).", NotificationMessageType.Raw);
+        SendMessageNewLine($"Received answer from {recivedEventArgs.IpAddress}. Returned {recivedEventArgs.Data.Count} host(s).", NotificationMessageType.Info);
         HostsManager.AddRange(recivedEventArgs.Data);
     }
 
@@ -198,15 +198,15 @@ public class ApiManager
 
     private void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
     {
-        ApiManager.SendMessageNewLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.", NotificationMessageType.Raw);
+        SendMessageNewLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.", NotificationMessageType.Info);
     }
 
-    internal static void SendMessage(string message, NotificationMessageType messageType = NotificationMessageType.Raw)
+    internal static void SendMessage(string message, NotificationMessageType messageType = NotificationMessageType.Info)
     {
         OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message));
     }
 
-    internal static void SendMessageNewLine(string message, NotificationMessageType messageType = NotificationMessageType.Raw)
+    internal static void SendMessageNewLine(string message, NotificationMessageType messageType = NotificationMessageType.Info)
     {
         OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message + Environment.NewLine));
     }

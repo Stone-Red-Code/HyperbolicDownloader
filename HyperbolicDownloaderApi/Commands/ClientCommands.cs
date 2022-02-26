@@ -9,12 +9,12 @@ public class ClientCommands
     {
         if (ApiManager.PublicIpAddress is not null)
         {
-            ApiManager.SendMessageNewLine($"The public IP address is: {ApiManager.PublicIpAddress}", NotificationMessageType.Success);
-            ApiManager.SendMessageNewLine($"The public port is: {ApiConfiguration.PublicPort}", NotificationMessageType.Success);
-            ApiManager.SendMessageNewLine(string.Empty, NotificationMessageType.Raw);
+            ApiManager.SendMessageNewLine($"The public IP address is: {ApiManager.PublicIpAddress}", NotificationMessageType.Info);
+            ApiManager.SendMessageNewLine($"The public port is: {ApiConfiguration.PublicPort}", NotificationMessageType.Info);
+            ApiManager.SendMessageNewLine(string.Empty, NotificationMessageType.Info);
         }
 
-        ApiManager.SendMessageNewLine($"The private IP address is: {NetworkUtilities.GetIP4Adress()}", NotificationMessageType.Success);
-        ApiManager.SendMessageNewLine($"The private port is: {ApiConfiguration.PrivatePort}", NotificationMessageType.Success);
+        ApiManager.SendMessageNewLine($"The private IP address is: {NetworkUtilities.GetIP4Adress()}", NotificationMessageType.Info);
+        ApiManager.SendMessageNewLine($"The private port is: {ApiConfiguration.PrivatePort}", NotificationMessageType.Info);
     }
 }

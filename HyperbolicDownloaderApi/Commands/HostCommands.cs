@@ -1,6 +1,7 @@
 ﻿using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
 
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 
@@ -17,7 +18,7 @@ public class HostCommands
 
     public void Discover(string _)
     {
-        ApiManager.SendMessageNewLine("Running local discovery routine...", NotificationMessageType.Raw);
+        ApiManager.SendMessageNewLine("Running local discovery routine...", NotificationMessageType.Info);
         BroadcastClient.Send(ApiConfiguration.BroadcastPort, ApiConfiguration.PrivatePort.ToString());
         Thread.Sleep(3000);
     }
@@ -31,9 +32,9 @@ public class HostCommands
             ApiManager.SendMessageNewLine("Use 'add host xxx.xxx.xxx.xxx:yyyy' to add a new host.", NotificationMessageType.Error);
         }
 
-        ApiManager.SendMessageNewLine(string.Empty, NotificationMessageType.Raw);
-        ApiManager.SendMessageNewLine($"{hostsManager.Count} known host(s).", NotificationMessageType.Raw);
-        ApiManager.SendMessageNewLine($"{activeHostsCount} active host(s).", NotificationMessageType.Raw);
+        ApiManager.SendMessageNewLine(string.Empty, NotificationMessageType.Info);
+        ApiManager.SendMessageNewLine($"{hostsManager.Count} known host(s).", NotificationMessageType.Info);
+        ApiManager.SendMessageNewLine($"{activeHostsCount} active host(s).", NotificationMessageType.Info);
     }
 
     public void ListHosts(string _)
@@ -50,9 +51,9 @@ public class HostCommands
         foreach (NetworkSocket host in hosts)
         {
             index++;
-            ApiManager.SendMessageNewLine($"{index}) {host.IPAddress}:{host.Port}", NotificationMessageType.Raw);
-            ApiManager.SendMessageNewLine($"Last active: {host.LastActive}", NotificationMessageType.Raw);
-            ApiManager.SendMessageNewLine(string.Empty, NotificationMessageType.Raw);
+            ApiManager.SendMessageNewLine($"{index}) {host.IPAddress}:{host.Port}", NotificationMessageType.Info);
+            ApiManager.SendMessageNewLine($"Last active: {host.LastActive}", NotificationMessageType.Info);
+            ApiManager.SendMessageNewLine(string.Empty, NotificationMessageType.Info);
         }
         Console.CursorTop--;
     }
@@ -107,42 +108,55 @@ public class HostCommands
 
         string ipAddressInput = parts[0];
         string portInput = parts[1];
+        IPAddress? ipAddress = null;
 
         _ = int.TryParse(portInput, out int port);
         if (port < 1000 || port >= 6000)
         {
             ApiManager.SendMessageNewLine("Invalid port number!", NotificationMessageType.Error);
+            return;
         }
-        else if (IPAddress.TryParse(ipAddressInput, out IPAddress? ipAddress))
+        else if (!IPAddress.TryParse(ipAddressInput, out ipAddress))
         {
             try
             {
-                ApiManager.SendMessageNewLine("Waiting for response...", NotificationMessageType.Raw);
-                NetworkSocket? localSocket = ApiManager.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0, DateTime.MinValue);
-                List<NetworkSocket>? recivedHosts = NetworkClient.Send<List<NetworkSocket>>(ipAddress, port, "GetHostsList", localSocket);
-
-                if (recivedHosts is not null)
-                {
-                    ApiManager.SendMessageNewLine($"Success! Added {recivedHosts.Count} new host(s).", NotificationMessageType.Success);
-                    hostsManager.AddRange(recivedHosts);
-                }
-                else
-                {
-                    ApiManager.SendMessageNewLine($"Invalid response!", NotificationMessageType.Error);
-                }
+                ipAddress = Dns.GetHostAddresses(ipAddressInput).FirstOrDefault();
             }
             catch (SocketException ex)
             {
-                ApiManager.SendMessageNewLine($"Invalid host! Error message: {ex.Message}", NotificationMessageType.Error);
-            }
-            catch (IOException ex)
-            {
-                ApiManager.SendMessageNewLine($"Invalid host! Error message: {ex.Message}", NotificationMessageType.Error);
+                Debug.WriteLine(ex);
             }
         }
-        else
+
+        if (ipAddress is null)
         {
             ApiManager.SendMessageNewLine("Invalid IP address!", NotificationMessageType.Error);
+            return;
+        }
+
+        try
+        {
+            ApiManager.SendMessageNewLine("Waiting for response...", NotificationMessageType.Info);
+            NetworkSocket? localSocket = ApiManager.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0, DateTime.MinValue);
+            List<NetworkSocket>? recivedHosts = NetworkClient.Send<List<NetworkSocket>>(ipAddress, port, "GetHostsList", localSocket);
+
+            if (recivedHosts is not null)
+            {
+                ApiManager.SendMessageNewLine($"Success! Added {recivedHosts.Count} new host(s).", NotificationMessageType.Success);
+                hostsManager.AddRange(recivedHosts);
+            }
+            else
+            {
+                ApiManager.SendMessageNewLine($"Invalid response!", NotificationMessageType.Error);
+            }
+        }
+        catch (SocketException ex)
+        {
+            ApiManager.SendMessageNewLine($"Invalid host! Error message: {ex.Message}", NotificationMessageType.Error);
+        }
+        catch (IOException ex)
+        {
+            ApiManager.SendMessageNewLine($"Invalid host! Error message: {ex.Message}", NotificationMessageType.Error);
         }
     }
 }
