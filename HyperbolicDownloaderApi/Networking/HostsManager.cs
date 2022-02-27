@@ -58,7 +58,7 @@ public class HostsManager
 
             try
             {
-                tcpClient.ConnectAsync(host.IPAddress, host.Port).Wait(1000);
+                tcpClient.ConnectAsync(host.IPAddress, host.Port).Wait(500);
                 Console.CursorLeft = 0;
                 if (tcpClient.Connected)
                 {
