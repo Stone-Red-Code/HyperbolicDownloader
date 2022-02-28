@@ -167,6 +167,9 @@ namespace HyperbolicDownloaderApi.Networking
                     FileInfo fileInfo = new FileInfo(hyperFileInfo.FilePath);
 
                     bytesToSend = Encoding.ASCII.GetBytes($"{fileInfo.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}");
+
+                    Array.Resize(ref bytesToSend, 1000);
+
                     await nwStream.WriteAsync(bytesToSend);
 
                     foreach (byte[]? chunk in FileCompressor.ReadChunks(hyperFileInfo.FilePath, 64000))
@@ -182,11 +185,14 @@ namespace HyperbolicDownloaderApi.Networking
                     bytesToSend = Encoding.ASCII.GetBytes("File not found!");
                     await nwStream.WriteAsync(bytesToSend);
                 }
-                client.Close();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex);
+            }
+            finally
+            {
+                client.Close();
             }
         }
 

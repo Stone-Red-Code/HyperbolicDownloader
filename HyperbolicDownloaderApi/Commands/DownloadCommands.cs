@@ -114,7 +114,7 @@ public class DownloadCommands
             int bytesRead;
             try
             {
-                bytesRead = nwStream.Read(buffer, 0, tcpClient.ReceiveBufferSize);
+                bytesRead = nwStream.Read(buffer, 0, 1000);
             }
             catch (IOException)
             {
@@ -127,107 +127,106 @@ public class DownloadCommands
 
             string[] parts = dataReceived.Split('/');
 
-            if (parts.Length == 2) //If received data does not contain 2 parts -> error
+            if (parts.Length != 2) //If received data does not contain 2 parts -> error
             {
-                bool validFileSize = int.TryParse(parts[0], out int fileSize);
+                ApiManager.SendMessageNewLine(dataReceived, NotificationMessageType.Error);
+                continue;
+            }
 
-                if (!validFileSize || fileSize <= 0)
+            bool validFileSize = int.TryParse(parts[0], out int fileSize);
+
+            if (!validFileSize || fileSize <= 0)
+            {
+                ApiManager.SendMessageNewLine("Invalid file size!", NotificationMessageType.Error);
+                continue;
+            }
+
+            string fileName = parts[1].ToFileName();
+            string directoryPath = Path.Combine(ApiConfiguration.BasePath, "Downloads");
+            string filePath = Path.Combine(directoryPath, fileName);
+
+            ApiManager.SendMessageNewLine($"File name: {fileName}");
+            ApiManager.SendMessageNewLine($"Starting download...");
+
+            int totalBytesRead = 0;
+
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            using FileStream? fileStream = new FileStream(filePath, FileMode.Create);
+
+            int bytesInOneSecond = 0;
+            int unitsPerSecond = 0;
+            string unit = "Kb";
+
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            while (totalBytesRead < fileSize)
+            {
+                try
                 {
-                    ApiManager.SendMessageNewLine("Invalid file size!", NotificationMessageType.Error);
-                    continue;
+                    bytesRead = nwStream.Read(reciveBuffer, 0, reciveBuffer.Length);
+                }
+                catch (IOException)
+                {
+                    ApiManager.SendMessageNewLine(string.Empty);
+                    ApiManager.SendMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
+                    break;
                 }
 
-                string fileName = parts[1].ToFileName();
-                string directoryPath = Path.Combine(ApiConfiguration.BasePath, "Downloads");
-                string filePath = Path.Combine(directoryPath, fileName);
+                bytesRead = Math.Min(bytesRead, fileSize - totalBytesRead);
 
-                ApiManager.SendMessageNewLine($"File name: {fileName}");
-                ApiManager.SendMessageNewLine($"Starting download...");
+                fileStream.Write(reciveBuffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
 
-                int totalBytesRead = 0;
+                bytesInOneSecond += bytesRead;
 
-                if (!Directory.Exists(directoryPath))
+                if (stopWatch.ElapsedMilliseconds >= 1000)
                 {
-                    Directory.CreateDirectory(directoryPath);
-                }
-
-                using FileStream? fileStream = new FileStream(filePath, FileMode.Create);
-
-                int bytesInOneSecond = 0;
-                int unitsPerSecond = 0;
-                string unit = "Kb";
-
-                Stopwatch stopWatch = new Stopwatch();
-                stopWatch.Start();
-                while (totalBytesRead < fileSize)
-                {
-                    try
+                    unitsPerSecond = (unitsPerSecond + bytesInOneSecond) / 2;
+                    if (unitsPerSecond > 125000)
                     {
-                        bytesRead = nwStream.Read(reciveBuffer, 0, reciveBuffer.Length);
+                        unitsPerSecond /= 125000;
+                        unit = "Mb";
                     }
-                    catch (IOException)
+                    else
                     {
-                        ApiManager.SendMessageNewLine(string.Empty);
-                        ApiManager.SendMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
-                        break;
+                        unitsPerSecond /= 125;
+                        unit = "Kb";
                     }
-
-                    bytesRead = Math.Min(bytesRead, fileSize - totalBytesRead);
-
-                    fileStream.Write(reciveBuffer, 0, bytesRead);
-                    totalBytesRead += bytesRead;
-
-                    bytesInOneSecond += bytesRead;
-
-                    if (stopWatch.ElapsedMilliseconds >= 1000)
-                    {
-                        unitsPerSecond = (unitsPerSecond + bytesInOneSecond) / 2;
-                        if (unitsPerSecond > 125000)
-                        {
-                            unitsPerSecond /= 125000;
-                            unit = "Mb";
-                        }
-                        else
-                        {
-                            unitsPerSecond /= 125;
-                            unit = "Kb";
-                        }
-                        bytesInOneSecond = 0;
-                        stopWatch.Restart();
-                    }
-
-                    ApiManager.SendMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
+                    bytesInOneSecond = 0;
+                    stopWatch.Restart();
                 }
 
-                fileStream.Close();
+                ApiManager.SendMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
+            }
 
-                if (totalBytesRead < fileSize)
-                {
-                    continue;
-                }
+            fileStream.Close();
 
-                ApiManager.SendMessageNewLine(string.Empty);
+            if (totalBytesRead < fileSize)
+            {
+                continue;
+            }
 
-                ApiManager.SendMessageNewLine("Validating file...");
-                if (FileValidator.ValidateHash(filePath, hash))
-                {
-                    _ = filesManager.TryAdd(filePath, out _, out _);
-                }
-                else
-                {
-                    ApiManager.SendMessageNewLine("Warning: File hash does not match! File might me corrupted or manipulated!", NotificationMessageType.Warning);
-                }
+            ApiManager.SendMessageNewLine(string.Empty);
 
-                ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
-                ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
-                stopWatch.Stop();
-                hostsManager.SaveHosts();
-                return;
+            ApiManager.SendMessageNewLine("Validating file...");
+            if (FileValidator.ValidateHash(filePath, hash))
+            {
+                _ = filesManager.TryAdd(filePath, out _, out _);
             }
             else
             {
-                ApiManager.SendMessageNewLine(dataReceived, NotificationMessageType.Error);
+                ApiManager.SendMessageNewLine("Warning: File hash does not match! File might me corrupted or manipulated!", NotificationMessageType.Warning);
             }
+
+            ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
+            ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
+            stopWatch.Stop();
+            hostsManager.SaveHosts();
+            return;
         }
         ApiManager.SendMessageNewLine("None of the available hosts have the requested file!", NotificationMessageType.Error);
         hostsManager.SaveHosts();
