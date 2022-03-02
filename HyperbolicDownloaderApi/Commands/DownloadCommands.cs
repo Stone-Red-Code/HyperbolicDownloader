@@ -169,8 +169,9 @@ public class DownloadCommands
                 {
                     bytesRead = nwStream.Read(reciveBuffer, 0, reciveBuffer.Length);
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
+                    Debug.WriteLine(ex);
                     ApiManager.SendMessageNewLine(string.Empty);
                     ApiManager.SendMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
                     break;
@@ -183,9 +184,9 @@ public class DownloadCommands
 
                 bytesInOneSecond += bytesRead;
 
-                if (stopWatch.ElapsedMilliseconds >= 1000)
+                if (stopWatch.Elapsed.TotalSeconds >= 1)
                 {
-                    unitsPerSecond = (unitsPerSecond + bytesInOneSecond) / 2;
+                    unitsPerSecond = (int)(bytesInOneSecond * stopWatch.Elapsed.TotalSeconds);
                     if (unitsPerSecond > 125000)
                     {
                         unitsPerSecond /= 125000;
