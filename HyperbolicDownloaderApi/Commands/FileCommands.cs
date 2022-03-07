@@ -28,7 +28,7 @@ public class FileCommands
         }
         else
         {
-            ApiManager.SendMessageNewLine(message, NotificationMessageType.Error);
+            ApiManager.SendMessageNewLine(message!, NotificationMessageType.Error);
         }
     }
 

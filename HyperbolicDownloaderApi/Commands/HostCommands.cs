@@ -108,9 +108,10 @@ public class HostCommands
 
         string ipAddressInput = parts[0];
         string portInput = parts[1];
-        IPAddress? ipAddress = null;
+        IPAddress? ipAddress;
 
         _ = int.TryParse(portInput, out int port);
+
         if (port < 1000 || port >= 6000)
         {
             ApiManager.SendMessageNewLine("Invalid port number!", NotificationMessageType.Error);
