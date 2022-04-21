@@ -2,3 +2,9 @@
 
 # S4457: Parameter validation in "async"/"await" methods should be wrapped
 dotnet_diagnostic.S4457.severity = silent
+
+# CA1822: Mark members as static
+dotnet_diagnostic.CA1822.severity = silent
+
+# S1172: Unused method parameters should be removed
+dotnet_diagnostic.S1172.severity = silent
