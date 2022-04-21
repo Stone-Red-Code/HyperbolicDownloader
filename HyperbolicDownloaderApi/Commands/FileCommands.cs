@@ -23,12 +23,12 @@ public class FileCommands
     {
         if (filesManager.TryAdd(path, out PrivateHyperFileInfo? fileInfo, out string? message))
         {
-            ApiManager.SendMessageNewLine($"Added file: {fileInfo!.FilePath}", NotificationMessageType.Success);
-            ApiManager.SendMessageNewLine($"Hash: {fileInfo.Hash}");
+            ApiManager.SendNotificationMessageNewLine($"Added file: {fileInfo!.FilePath}", NotificationMessageType.Success);
+            ApiManager.SendNotificationMessageNewLine($"Hash: {fileInfo.Hash}");
         }
         else
         {
-            ApiManager.SendMessageNewLine(message!, NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine(message!, NotificationMessageType.Error);
         }
     }
 
@@ -38,11 +38,11 @@ public class FileCommands
 
         if (filesManager.TryRemove(hash))
         {
-            ApiManager.SendMessageNewLine($"Successfully removed file!", NotificationMessageType.Success);
+            ApiManager.SendNotificationMessageNewLine($"Successfully removed file!", NotificationMessageType.Success);
         }
         else
         {
-            ApiManager.SendMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
         }
     }
 
@@ -53,16 +53,16 @@ public class FileCommands
 
         if (fileInfos.Count == 0)
         {
-            ApiManager.SendMessageNewLine("No tracked files!", NotificationMessageType.Warning);
+            ApiManager.SendNotificationMessageNewLine("No tracked files!", NotificationMessageType.Warning);
             return;
         }
 
         foreach (PrivateHyperFileInfo fileInfo in fileInfos)
         {
             index++;
-            ApiManager.SendMessageNewLine($"{index}) {fileInfo.FilePath}");
-            ApiManager.SendMessageNewLine($"Hash: {fileInfo.Hash}");
-            ApiManager.SendMessageNewLine(string.Empty);
+            ApiManager.SendNotificationMessageNewLine($"{index}) {fileInfo.FilePath}");
+            ApiManager.SendNotificationMessageNewLine($"Hash: {fileInfo.Hash}");
+            ApiManager.SendNotificationMessageNewLine(string.Empty);
         }
         Console.CursorTop--;
     }
@@ -79,7 +79,7 @@ public class FileCommands
 
         if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
         {
-            ApiManager.SendMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
             return;
         }
 
@@ -91,7 +91,7 @@ public class FileCommands
         NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
         {
-            ApiManager.SendMessageNewLine("Network error!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Network error!", NotificationMessageType.Error);
             return;
         }
 
@@ -102,8 +102,8 @@ public class FileCommands
 
         File.WriteAllText(filePath, json);
 
-        ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
-        ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
+        ApiManager.SendNotificationMessageNewLine("Done", NotificationMessageType.Success);
+        ApiManager.SendNotificationMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
     }
 
     public void GenerateFileFull(string hash)
@@ -118,7 +118,7 @@ public class FileCommands
 
         if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
         {
-            ApiManager.SendMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
             return;
         }
 
@@ -130,7 +130,7 @@ public class FileCommands
         NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
         {
-            ApiManager.SendMessageNewLine("Network error!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Network error!", NotificationMessageType.Error);
             return;
         }
 
@@ -144,7 +144,7 @@ public class FileCommands
                 continue;
             }
 
-            ApiManager.SendMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
+            ApiManager.SendNotificationMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
 
             Console.CursorLeft = 0;
 
@@ -155,7 +155,7 @@ public class FileCommands
             if (!sendTask.IsCompletedSuccessfully)
             {
                 Console.CursorLeft = 0;
-                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
 
                 hostsManager.Remove(host);
                 continue;
@@ -163,13 +163,13 @@ public class FileCommands
             else if (!sendTask.Result)
             {
                 host.LastActive = DateTime.Now;
-                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", NotificationMessageType.Error);
                 continue;
             }
 
             host.LastActive = DateTime.Now;
 
-            ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Has the requested file", NotificationMessageType.Success);
+            ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Has the requested file", NotificationMessageType.Success);
             publicHyperFileInfo.Hosts.Add(host);
         }
 
@@ -180,7 +180,7 @@ public class FileCommands
 
         File.WriteAllText(filePath, json);
 
-        ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
-        ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
+        ApiManager.SendNotificationMessageNewLine("Done", NotificationMessageType.Success);
+        ApiManager.SendNotificationMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
     }
 }

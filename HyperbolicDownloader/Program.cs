@@ -1,7 +1,6 @@
 ﻿using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
-using HyperbolicDownloaderApi.UserInterface;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 

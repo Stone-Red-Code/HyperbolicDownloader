@@ -27,7 +27,7 @@ public class DownloadCommands
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            ApiManager.SendMessageNewLine("Path is empty!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Path is empty!", NotificationMessageType.Error);
             return;
         }
 
@@ -35,7 +35,7 @@ public class DownloadCommands
 
         if (!File.Exists(fullPath))
         {
-            ApiManager.SendMessageNewLine("Invalid file path!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Invalid file path!", NotificationMessageType.Error);
         }
 
         string json = File.ReadAllText(fullPath);
@@ -43,7 +43,7 @@ public class DownloadCommands
         PublicHyperFileInfo? publicHyperFileInfo = JsonSerializer.Deserialize<PublicHyperFileInfo>(json);
         if (publicHyperFileInfo == null)
         {
-            ApiManager.SendMessageNewLine("Parsing file failed!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Parsing file failed!", NotificationMessageType.Error);
             return;
         }
 
@@ -55,7 +55,7 @@ public class DownloadCommands
     {
         if (string.IsNullOrEmpty(hash))
         {
-            ApiManager.SendMessageNewLine("No hash value specified!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("No hash value specified!", NotificationMessageType.Error);
             return;
         }
 
@@ -71,7 +71,7 @@ public class DownloadCommands
                 continue;
             }
 
-            ApiManager.SendMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
+            ApiManager.SendNotificationMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
 
             Console.CursorLeft = 0;
 
@@ -82,7 +82,7 @@ public class DownloadCommands
             if (!sendTask.IsCompletedSuccessfully)
             {
                 Console.CursorLeft = 0;
-                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
 
                 hostsManager.Remove(host);
                 continue;
@@ -90,14 +90,14 @@ public class DownloadCommands
             else if (!sendTask.Result)
             {
                 host.LastActive = DateTime.Now;
-                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Does not have the requested file", NotificationMessageType.Error);
                 continue;
             }
 
             host.LastActive = DateTime.Now;
 
-            ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Has the requested file", NotificationMessageType.Success);
-            ApiManager.SendMessageNewLine("Requesting file...");
+            ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Has the requested file", NotificationMessageType.Success);
+            ApiManager.SendNotificationMessageNewLine("Requesting file...");
 
             using TcpClient tcpClient = new TcpClient();
             tcpClient.Connect(ipAddress!, host.Port);
@@ -118,8 +118,8 @@ public class DownloadCommands
             }
             catch (IOException)
             {
-                ApiManager.SendMessageNewLine(string.Empty);
-                ApiManager.SendMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine(string.Empty);
+                ApiManager.SendNotificationMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
                 continue;
             }
 
@@ -129,7 +129,7 @@ public class DownloadCommands
 
             if (parts.Length != 2) //If received data does not contain 2 parts -> error
             {
-                ApiManager.SendMessageNewLine(dataReceived, NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine(dataReceived, NotificationMessageType.Error);
                 continue;
             }
 
@@ -137,7 +137,7 @@ public class DownloadCommands
 
             if (!validFileSize || fileSize <= 0)
             {
-                ApiManager.SendMessageNewLine("Invalid file size!", NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine("Invalid file size!", NotificationMessageType.Error);
                 continue;
             }
 
@@ -145,8 +145,8 @@ public class DownloadCommands
             string directoryPath = Path.Combine(ApiConfiguration.BasePath, "Downloads");
             string filePath = Path.Combine(directoryPath, fileName);
 
-            ApiManager.SendMessageNewLine($"File name: {fileName}");
-            ApiManager.SendMessageNewLine($"Starting download...");
+            ApiManager.SendNotificationMessageNewLine($"File name: {fileName}");
+            ApiManager.SendNotificationMessageNewLine($"Starting download...");
 
             int totalBytesRead = 0;
 
@@ -172,8 +172,8 @@ public class DownloadCommands
                 catch (IOException ex)
                 {
                     Debug.WriteLine(ex);
-                    ApiManager.SendMessageNewLine(string.Empty);
-                    ApiManager.SendMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
+                    ApiManager.SendNotificationMessageNewLine(string.Empty);
+                    ApiManager.SendNotificationMessageNewLine("Lost connection to other host!", NotificationMessageType.Error);
                     break;
                 }
 
@@ -201,7 +201,7 @@ public class DownloadCommands
                     stopWatch.Restart();
                 }
 
-                ApiManager.SendMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
+                ApiManager.SendNotificationMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
             }
 
             fileStream.Close();
@@ -211,25 +211,26 @@ public class DownloadCommands
                 continue;
             }
 
-            ApiManager.SendMessageNewLine(string.Empty);
+            ApiManager.SendNotificationMessageNewLine(string.Empty);
 
-            ApiManager.SendMessageNewLine("Validating file...");
+            ApiManager.SendNotificationMessageNewLine("Validating file...");
             if (FileValidator.ValidateHash(filePath, hash))
             {
                 _ = filesManager.TryAdd(filePath, out _, out _);
             }
             else
             {
-                ApiManager.SendMessageNewLine("Warning: File hash does not match! File might me corrupted or manipulated!", NotificationMessageType.Warning);
+                ApiManager.SendNotificationMessageNewLine("Warning: File hash does not match! File might me corrupted or manipulated! Trying next host...", NotificationMessageType.Warning);
+                continue;
             }
 
-            ApiManager.SendMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
-            ApiManager.SendMessageNewLine("Done", NotificationMessageType.Success);
+            ApiManager.SendNotificationMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
+            ApiManager.SendNotificationMessageNewLine("Done", NotificationMessageType.Success);
             stopWatch.Stop();
             hostsManager.SaveHosts();
             return;
         }
-        ApiManager.SendMessageNewLine("None of the available hosts have the requested file!", NotificationMessageType.Error);
+        ApiManager.SendNotificationMessageNewLine("None of the available hosts have the requested file!", NotificationMessageType.Error);
         hostsManager.SaveHosts();
     }
 }

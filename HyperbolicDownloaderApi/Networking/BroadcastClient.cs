@@ -26,7 +26,7 @@ internal class BroadcastClient
 
         if (ip4Address is null)
         {
-            ApiManager.SendMessageNewLine("Could not find suitable network adapter!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Could not find suitable network adapter!", NotificationMessageType.Error);
             return;
         }
 
@@ -34,7 +34,7 @@ internal class BroadcastClient
 
         if (addressInformation is null)
         {
-            ApiManager.SendMessageNewLine("Could not find suitable network adapter!", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Could not find suitable network adapter!", NotificationMessageType.Error);
             return;
         }
 
