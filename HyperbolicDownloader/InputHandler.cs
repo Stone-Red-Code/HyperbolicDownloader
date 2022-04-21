@@ -5,7 +5,7 @@ using HyperbolicDownloaderApi.FileProcessing;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 
-namespace HyperbolicDownloaderApi.UserInterface;
+namespace HyperbolicDownloaderApi;
 
 internal class InputHandler
 {
