@@ -53,7 +53,7 @@ public class HostsManager
         int activeHostsCount = 0;
         foreach (NetworkSocket host in hosts)
         {
-            ApiManager.SendMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
+            ApiManager.SendNotificationMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
             using TcpClient tcpClient = new TcpClient();
 
             try
@@ -62,7 +62,7 @@ public class HostsManager
                 Console.CursorLeft = 0;
                 if (tcpClient.Connected)
                 {
-                    ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Active", NotificationMessageType.Success);
+                    ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Active", NotificationMessageType.Success);
                     host.LastActive = DateTime.Now;
                     activeHostsCount++;
                 }
@@ -72,7 +72,7 @@ public class HostsManager
                     {
                         hostsToRemove.Add(host);
                     }
-                    ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
+                    ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
                 }
             }
             catch
@@ -82,7 +82,7 @@ public class HostsManager
                     hostsToRemove.Add(host);
                 }
                 Console.CursorLeft = 0;
-                ApiManager.SendMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
+                ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
             }
         }
 

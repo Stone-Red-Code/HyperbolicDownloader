@@ -62,30 +62,30 @@ public class ApiManager
             device = await discoverer.DiscoverDeviceAsync();
 
             IPAddress? ip = await device.GetExternalIPAsync();
-            SendMessageNewLine($"The public IP address is: {ip} ", NotificationMessageType.Success);
+            SendNotificationMessageNewLine($"The public IP address is: {ip} ", NotificationMessageType.Success);
 
             portMapping = new Mapping(Protocol.Tcp, ApiConfiguration.PrivatePort, ApiConfiguration.PublicPort, "HyperbolicDowloader");
 
             await device.CreatePortMapAsync(portMapping);
 
-            SendMessageNewLine($"The public port is: {ApiConfiguration.PublicPort}", NotificationMessageType.Success);
+            SendNotificationMessageNewLine($"The public port is: {ApiConfiguration.PublicPort}", NotificationMessageType.Success);
             return true;
         }
         catch (NatDeviceNotFoundException)
         {
-            SendMessageNewLine($"Could not find a UPnP or NAT-PMP device!", NotificationMessageType.Error);
+            SendNotificationMessageNewLine($"Could not find a UPnP or NAT-PMP device!", NotificationMessageType.Error);
             return false;
         }
         catch (MappingException ex)
         {
-            SendMessageNewLine($"An error occurred while mapping the private port ({ApiConfiguration.PrivatePort}) to the public port ({ApiConfiguration.PublicPort})! Error message: {ex.Message}", NotificationMessageType.Error);
+            SendNotificationMessageNewLine($"An error occurred while mapping the private port ({ApiConfiguration.PrivatePort}) to the public port ({ApiConfiguration.PublicPort})! Error message: {ex.Message}", NotificationMessageType.Error);
             return false;
         }
     }
 
     public static void ClosePorts()
     {
-        SendMessageNewLine("Closing ports...", NotificationMessageType.Info);
+        SendNotificationMessageNewLine("Closing ports...", NotificationMessageType.Info);
         if (device is not null)
         {
             try
@@ -101,11 +101,11 @@ public class ApiManager
             }
             catch (Exception ex)
             {
-                SendMessageNewLine(ex.ToString(), NotificationMessageType.Error);
+                SendNotificationMessageNewLine(ex.ToString(), NotificationMessageType.Error);
             }
         }
 
-        SendMessageNewLine("Ports closed!", NotificationMessageType.Warning);
+        SendNotificationMessageNewLine("Ports closed!", NotificationMessageType.Warning);
         Environment.Exit(0);
     }
 
@@ -127,7 +127,7 @@ public class ApiManager
         }
         catch (SocketException ex)
         {
-            SendMessageNewLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}", NotificationMessageType.Error); // net stop hens && net start hns
+            SendNotificationMessageNewLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}", NotificationMessageType.Error); // net stop hens && net start hns
             Console.ReadKey();
         }
     }
@@ -165,7 +165,7 @@ public class ApiManager
 
     private void DiscoverAnswer(object? sender, MessageRecivedEventArgs<List<NetworkSocket>> recivedEventArgs)
     {
-        SendMessageNewLine($"Received answer from {recivedEventArgs.IpAddress}. Returned {recivedEventArgs.Data.Count} host(s).", NotificationMessageType.Info);
+        SendNotificationMessageNewLine($"Received answer from {recivedEventArgs.IpAddress}. Returned {recivedEventArgs.Data.Count} host(s).", NotificationMessageType.Info);
         HostsManager.AddRange(recivedEventArgs.Data);
     }
 
@@ -198,15 +198,15 @@ public class ApiManager
 
     private void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
     {
-        SendMessageNewLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.", NotificationMessageType.Info);
+        SendNotificationMessageNewLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.", NotificationMessageType.Info);
     }
 
-    internal static void SendMessage(string message, NotificationMessageType messageType = NotificationMessageType.Info)
+    internal static void SendNotificationMessage(string message, NotificationMessageType messageType = NotificationMessageType.Info)
     {
         OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message));
     }
 
-    internal static void SendMessageNewLine(string message, NotificationMessageType messageType = NotificationMessageType.Info)
+    internal static void SendNotificationMessageNewLine(string message, NotificationMessageType messageType = NotificationMessageType.Info)
     {
         OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message + Environment.NewLine));
     }
