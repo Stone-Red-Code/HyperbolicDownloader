@@ -2,14 +2,14 @@
 
 using HyperbolicDownloaderApi.Commands;
 using HyperbolicDownloaderApi.FileProcessing;
+using HyperbolicDownloaderApi.Networking;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 
-namespace HyperbolicDownloaderApi;
+namespace HyperbolicDownloader;
 
 internal class InputHandler
 {
-    private readonly HostsManager hostsManager;
     private readonly Commander commander = new Commander();
     private bool exit = false;
 
@@ -20,10 +20,8 @@ internal class InputHandler
         DownloadCommands downloadCommands = new DownloadCommands(hostsManager, filesManager);
         ClientCommands clientCommands = new ClientCommands();
 
-        this.hostsManager = hostsManager;
-
         commander.Register((_) => Console.Clear(), "clear", "cls");
-        commander.Register(Exit, "exit", "quit");
+        commander.Register((_) => exit = true, "exit", "quit");
         commander.Register(clientCommands.ShowInfo, "info", "inf");
         commander.Register(hostCommands.Discover, "discover", "disc");
 
@@ -71,11 +69,5 @@ internal class InputHandler
                 ConsoleExt.WriteLine($"An unexpected error occurred! {ex}", ConsoleColor.Red);
             }
         }
-    }
-
-    private void Exit(string _)
-    {
-        hostsManager.SaveHosts();
-        exit = true;
     }
 }

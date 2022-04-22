@@ -6,7 +6,7 @@ using Stone_Red_Utilities.ConsoleExtentions;
 
 using System.Text.Json;
 
-namespace HyperbolicDownloaderApi;
+namespace HyperbolicDownloader;
 
 internal static class Program
 {
@@ -14,7 +14,7 @@ internal static class Program
 
     private static async Task Main(string[] args)
     {
-        Console.CancelKeyPress += Console_CancelKeyPress;
+        Console.CancelKeyPress += (_, _) => Close();
         Console.CursorVisible = false;
 
         ApiManager.OnNotificationMessageRecived += ApiManager_OnNotificationMessageRecived;
@@ -35,7 +35,7 @@ internal static class Program
 
         if (args.Length > 0 && File.Exists(args[0]))
         {
-            Commands.DownloadCommands downloadCommands = new Commands.DownloadCommands(apiManager.HostsManager, apiManager.FilesManager);
+            HyperbolicDownloaderApi.Commands.DownloadCommands downloadCommands = new HyperbolicDownloaderApi.Commands.DownloadCommands(apiManager.HostsManager, apiManager.FilesManager);
             downloadCommands.GetFileFrom(args[0]);
             Console.WriteLine("Do you want to continue using this instance? [y/N]");
             if (char.ToLower(Console.ReadKey().KeyChar) != 'y')
@@ -76,7 +76,7 @@ internal static class Program
         ConsoleExt.WriteLine("Ready", ConsoleColor.Green);
 
         inputHandler.ReadInput();
-        ApiManager.ClosePorts();
+        Close();
     }
 
     private static void ApiManager_OnNotificationMessageRecived(object? sender, NotificationMessageEventArgs e)
@@ -90,7 +90,7 @@ internal static class Program
         }
     }
 
-    private static void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+    private static void Close()
     {
         ApiManager.ClosePorts();
         apiManager.HostsManager.SaveHosts();

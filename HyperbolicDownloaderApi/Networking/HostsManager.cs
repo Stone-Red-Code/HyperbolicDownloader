@@ -1,10 +1,9 @@
 ﻿using HyperbolicDownloaderApi.Managment;
-using HyperbolicDownloaderApi.Networking;
 
 using System.Net.Sockets;
 using System.Text.Json;
 
-namespace HyperbolicDownloaderApi;
+namespace HyperbolicDownloaderApi.Networking;
 
 public class HostsManager
 {
