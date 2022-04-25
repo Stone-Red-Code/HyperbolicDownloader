@@ -115,7 +115,7 @@ public class ApiManager
         broadcastClient.OnBroadcastRecived += BroadcastClient_OnBroadcastRecived;
     }
 
-    public void StartTcpListener()
+    public bool StartTcpListener()
     {
         try
         {
@@ -128,8 +128,10 @@ public class ApiManager
         catch (SocketException ex)
         {
             SendNotificationMessageNewLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}", NotificationMessageType.Error); // net stop hens && net start hns
-            Console.ReadKey();
+            return false;
         }
+
+        return true;
     }
 
     private async void BroadcastClient_OnBroadcastRecived(object? sender, BroadcastRecivedEventArgs recivedEventArgs)

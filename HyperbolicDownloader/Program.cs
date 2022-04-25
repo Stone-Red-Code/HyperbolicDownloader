@@ -52,7 +52,10 @@ internal static class Program
         ConsoleExt.WriteLine($"The private port is: {ApiConfiguration.PrivatePort}", ConsoleColor.Green);
 
         Console.WriteLine("Starting TCP listener...");
-        apiManager.StartTcpListener();
+        if (!apiManager.StartTcpListener())
+        {
+            Console.ReadLine();
+        }
 
         Console.WriteLine("Starting broadcast listener...");
         apiManager.StartBroadcastListener();
