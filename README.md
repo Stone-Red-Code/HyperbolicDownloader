@@ -25,7 +25,6 @@ You can generate `.hyper` files with your client using the [generate](https://gi
 These files contain the hash value of the actual file and the hosts that should have the requested file.
 You can use the [get from](https://github.com/Stone-Red-Code/HyperbolicDownloader#getfrom) command to retrieve the file or if you are using Windows you can right-click the `.hyper` file, select `open with` and select the HyperbolicDownloader executable.
 
-
 ## Disclaimer
 
 Keep in mind that all network traffic is not encrypted. So, do not send sensitive information with HyperbolicDownloader.
@@ -41,30 +40,25 @@ Since none of the files are stored anywhere centralized, the quality of the file
 **Description:** Exits the application.\
 **Parameter:** `none`
 
-
 ### `clear` | `cls`
 
 **Description:** Clears the console.\
 **Parameter:** `none`
-
 
 ### `info` | `inf`
 
 **Description:** Displays the private and public IP address.\
 **Parameter:** `none`
 
-
 ### `discover` | `disc`
 
 **Description:** Tries to find other active hosts on the local network.\
 **parameter:** `none`
 
-
 ### `check` | `status`
 
 **Description:** Checks the status of known hosts.\
 **parameter:** `none`
-
 
 ### `list` | `ls`
 
@@ -73,14 +67,13 @@ Since none of the files are stored anywhere centralized, the quality of the file
 
 #### `<list> files`
 
-**Description:** Lists all files\
+**Description:** Lists all files.\
 **parameter:** `none`
 
 #### `<list> hosts`
 
-**description:** lists all hosts
+**description:** Lists all hosts.\
 **parameter:** `none`
-
 
 ### `add`
 
@@ -97,7 +90,6 @@ Since none of the files are stored anywhere centralized, the quality of the file
 **Description:** Adds a host to the list of known hosts.\
 **parameter:** `<IpAddress:port>`
 
-
 ### `remove` | `rm`
 
 **Description:** Removes a file from the tracking list.\
@@ -112,7 +104,6 @@ Since none of the files are stored anywhere centralized, the quality of the file
 
 **Description:** Removes a host from the list of known hosts.\
 **parameter:** `<IpAddress:Port>`
-
 
 ### `get`
 
