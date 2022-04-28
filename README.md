@@ -111,12 +111,14 @@ Since none of the files are stored anywhere centralized, the quality of the file
 **parameter:** `<FileHash>`
 
 <a name="#getfrom"></a>
+
 #### `<get> from`
 
 **Description:** Attempts to retrieve a file from another host using a .hyper file.\
 **Parameter:** `<FilePathToHyperFile>`
 
 <a name="#generate"></a>
+
 ### `generate` | `gen`
 
 **Description:** Generates a .hyper file from a file hash.\
