@@ -14,10 +14,7 @@ public class HostsManager
     {
         foreach (NetworkSocket host in hosts)
         {
-            if (!Contains(host))
-            {
-                this.hosts.Add(host);
-            }
+            Add(host);
         }
 
         SaveHosts();
@@ -36,7 +33,7 @@ public class HostsManager
     {
         if (DateTime.Now - host.LastActive >= new TimeSpan(24, 0, 0) || forceRemove)
         {
-            hosts.RemoveAll(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
+            _ = hosts.RemoveAll(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
         }
         SaveHosts();
     }
@@ -57,7 +54,7 @@ public class HostsManager
 
             try
             {
-                tcpClient.ConnectAsync(host.IPAddress, host.Port).Wait(500);
+                _ = tcpClient.ConnectAsync(host.IPAddress, host.Port).Wait(500);
                 Console.CursorLeft = 0;
                 if (tcpClient.Connected)
                 {
@@ -87,7 +84,7 @@ public class HostsManager
 
         foreach (NetworkSocket host in hostsToRemove)
         {
-            hosts.Remove(host);
+            _ = hosts.Remove(host);
         }
 
         SaveHosts();

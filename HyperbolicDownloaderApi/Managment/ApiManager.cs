@@ -35,10 +35,10 @@ public class ApiManager
 
         if (device is not null)
         {
-            ipAddress = (device.GetExternalIPAsync()).GetAwaiter().GetResult()?.ToString();
+            ipAddress = device.GetExternalIPAsync().GetAwaiter().GetResult()?.ToString();
         }
 
-        if (ipAddress is null || ipAddress == "0.0.0.0")
+        if (ipAddress is null or "0.0.0.0")
         {
             ipAddress = NetworkUtilities.GetIP4Adress()?.ToString();
             port = ApiConfiguration.PrivatePort;
@@ -136,24 +136,27 @@ public class ApiManager
 
     private async void BroadcastClient_OnBroadcastRecived(object? sender, BroadcastRecivedEventArgs recivedEventArgs)
     {
-        Debug.WriteLine($"Received broadcast \"{recivedEventArgs.Message}\" from {recivedEventArgs.IPEndPoint.Address}");
+        IPAddress remoteIpAddress = recivedEventArgs.IPEndPoint.Address;
+
+        Debug.WriteLine($"Received broadcast \"{recivedEventArgs.Message}\" from {remoteIpAddress}");
         List<NetworkSocket> hostsToSend = HostsManager.ToList();
 
         NetworkSocket? localSocket = GetLocalSocket();
 
-        if (localSocket is null)
+        if (localSocket is null || remoteIpAddress.Equals(PublicIpAddress) || remoteIpAddress.Equals(NetworkUtilities.GetIP4Adress()))
         {
+            Debug.WriteLine("Invalid broadcast!");
             return;
         }
 
-        hostsToSend.RemoveAll(x => x.IPAddress == recivedEventArgs.IPEndPoint.Address.ToString());
+        _ = hostsToSend.RemoveAll(x => x.IPAddress == recivedEventArgs.IPEndPoint.Address.ToString());
         hostsToSend.Add(localSocket);
 
         bool success = int.TryParse(recivedEventArgs.Message, out int remotePort);
 
         if (success)
         {
-            HostsManager.Add(new NetworkSocket(recivedEventArgs.IPEndPoint.Address.ToString(), remotePort, DateTime.Now));
+            HostsManager.Add(new NetworkSocket(remoteIpAddress.ToString(), remotePort, DateTime.Now));
             try
             {
                 await NetworkClient.SendAsync(recivedEventArgs.IPEndPoint.Address, remotePort, "DiscoverAnswer", hostsToSend);
@@ -182,7 +185,7 @@ public class ApiManager
             return;
         }
 
-        hostsToSend.RemoveAll(x => x.IPAddress == recivedEventArgs.IpAddress.ToString());
+        _ = hostsToSend.RemoveAll(x => x.IPAddress == recivedEventArgs.IpAddress.ToString());
         hostsToSend.Add(localSocket);
 
         if (recivedEventArgs.Data.Port != 0)
