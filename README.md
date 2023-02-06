@@ -4,11 +4,11 @@
 
 ## Usage
 
-1. Download one of the [releases](https://github.com/Stone-Red-Code/HyperbolicDownloader/releases)
-1. Execute the `HyperbolicDownloader` file
-1. Wait until the setup process is finished
-1. Do one of the below
-    - Add a host to your client using the [add](#add) command and use the [get](#get) command to retrieve a file
+1. Download one of the [releases](https://github.com/Stone-Red-Code/HyperbolicDownloader/releases).
+1. Execute the `HyperbolicDownloader` file.
+1. Wait until the setup process is finished.
+1. Do one of the below:
+    - Add a host to your client using the [add](#add) command and use the [get](#get) command to retrieve a file.
     - Use the [generate](https://github.com/Stone-Red-Code/HyperbolicDownloader#generate) command to generate a `.hyper` file and the [get from](https://github.com/Stone-Red-Code/HyperbolicDownloader#getfrom) command to retrieve a file through the generated `.hyper` file.
 
 ## How it works
