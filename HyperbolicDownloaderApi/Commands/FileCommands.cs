@@ -72,7 +72,7 @@ public class FileCommands
         string directoryPath = Path.Combine(ApiConfiguration.BasePath, "GeneratedFiles");
         if (!Directory.Exists(directoryPath))
         {
-            Directory.CreateDirectory(directoryPath);
+            _ = Directory.CreateDirectory(directoryPath);
         }
 
         hash = hash.Trim().ToLower();
@@ -111,7 +111,7 @@ public class FileCommands
         string directoryPath = Path.Combine(ApiConfiguration.BasePath, "GeneratedFiles");
         if (!Directory.Exists(directoryPath))
         {
-            Directory.CreateDirectory(directoryPath);
+            _ = Directory.CreateDirectory(directoryPath);
         }
 
         hash = hash.Trim().ToLower();

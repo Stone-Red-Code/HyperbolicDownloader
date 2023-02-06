@@ -43,7 +43,7 @@ internal class BroadcastClient
         byte[] sendbuf = Encoding.ASCII.GetBytes(message);
         IPEndPoint ep = new IPEndPoint(broadcast, port);
 
-        socket.SendTo(sendbuf, ep);
+        _ = socket.SendTo(sendbuf, ep);
     }
 
     public void StartListening(int port)
@@ -58,7 +58,7 @@ internal class BroadcastClient
         udpListener = new UdpClient(port);
         IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, port);
 
-        Task.Run(() =>
+        _ = Task.Run(() =>
         {
             while (IsListening)
             {

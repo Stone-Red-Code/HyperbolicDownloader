@@ -19,8 +19,13 @@ public class HostCommands
     public void Discover(string _)
     {
         ApiManager.SendNotificationMessageNewLine("Running local discovery routine...", NotificationMessageType.Info);
+
+        int hostsCountBefore = hostsManager.Count;
+
         BroadcastClient.Send(ApiConfiguration.BroadcastPort, ApiConfiguration.PrivatePort.ToString());
         Thread.Sleep(3000);
+
+        ApiManager.SendNotificationMessageNewLine($"Found {hostsManager.Count - hostsCountBefore} host(s)", NotificationMessageType.Info);
     }
 
     public void CheckActiveHosts(string _)
@@ -72,7 +77,7 @@ public class HostCommands
         string portInput = parts[1];
 
         _ = int.TryParse(portInput, out int port);
-        if (port < 1000 || port >= 6000)
+        if (port is < 1000 or >= 6000)
         {
             ApiManager.SendNotificationMessageNewLine("Invalid port number!", NotificationMessageType.Error);
             return;
@@ -112,7 +117,7 @@ public class HostCommands
 
         _ = int.TryParse(portInput, out int port);
 
-        if (port < 1000 || port >= 6000)
+        if (port is < 1000 or >= 6000)
         {
             ApiManager.SendNotificationMessageNewLine("Invalid port number!", NotificationMessageType.Error);
             return;

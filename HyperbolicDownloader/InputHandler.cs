@@ -2,14 +2,14 @@
 
 using HyperbolicDownloaderApi.Commands;
 using HyperbolicDownloaderApi.FileProcessing;
+using HyperbolicDownloaderApi.Networking;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 
-namespace HyperbolicDownloaderApi;
+namespace HyperbolicDownloader;
 
 internal class InputHandler
 {
-    private readonly HostsManager hostsManager;
     private readonly Commander commander = new Commander();
     private bool exit = false;
 
@@ -20,32 +20,31 @@ internal class InputHandler
         DownloadCommands downloadCommands = new DownloadCommands(hostsManager, filesManager);
         ClientCommands clientCommands = new ClientCommands();
 
-        this.hostsManager = hostsManager;
+        _ = commander.Register(input => commander.PrintHelp(input), "help");
+        _ = commander.Register(_ => Console.Clear(), (HelpText)"Clears the console.", "clear", "cls");
+        _ = commander.Register(_ => exit = true, (HelpText)"Exits the application.", "exit", "quit");
+        _ = commander.Register(clientCommands.ShowInfo, (HelpText)"Displays the private and public IP address.", "info", "inf");
+        _ = commander.Register(hostCommands.Discover, (HelpText)"Tries to find other active hosts on the local network.", "discover", "disc");
 
-        commander.Register((_) => Console.Clear(), "clear", "cls");
-        commander.Register(Exit, "exit", "quit");
-        commander.Register(clientCommands.ShowInfo, "info", "inf");
-        commander.Register(hostCommands.Discover, "discover", "disc");
+        Command getCommand = commander.Register(downloadCommands.GetFile, (HelpText)"Attempts to retrieve a file from another host using a hash.", "get");
+        _ = getCommand.Register(downloadCommands.GetFileFrom, (HelpText)"Attempts to retrieve a file from another host using a .hyper file.", "from");
 
-        Command getCommand = commander.Register(downloadCommands.GetFile, "get");
-        getCommand.Register(downloadCommands.GetFileFrom, "from");
+        Command generateCommad = commander.Register(fileCommands.GenerateFileFull, (HelpText)"Generates a .hyper file from a file hash.", "generate", "gen");
+        _ = generateCommad.Register(fileCommands.GenerateFileSingle, (HelpText)"Generates a .hyper file from a file hash without checking the known hosts. This adds only the local host to the file.", "noscan");
 
-        Command generateCommad = commander.Register(fileCommands.GenerateFileFull, "generate", "gen");
-        generateCommad.Register(fileCommands.GenerateFileSingle, "noscan");
+        Command addCommand = commander.Register(fileCommands.AddFile, (HelpText)"Adds a file to the tracking list.", "add");
+        _ = addCommand.Register(fileCommands.AddFile, (HelpText)"Adds a file to the tracking list.", "file");
+        _ = addCommand.Register(hostCommands.AddHost, (HelpText)"Adds a host to the list of known hosts.", "host");
 
-        Command addCommand = commander.Register(fileCommands.AddFile, "add");
-        addCommand.Register(hostCommands.AddHost, "host");
-        addCommand.Register(fileCommands.AddFile, "file");
+        Command removeCommand = commander.Register(fileCommands.RemoveFile, (HelpText)"Removes a file from the tracking list.", "remove", "rm");
+        _ = removeCommand.Register(fileCommands.RemoveFile, (HelpText)"Removes a file from the tracking list.", "file");
+        _ = removeCommand.Register(hostCommands.RemoveHost, (HelpText)"Removes a host from the list of known hosts.", "host");
 
-        Command removeCommand = commander.Register(fileCommands.RemoveFile, "remove", "rm");
-        removeCommand.Register(hostCommands.RemoveHost, "host");
-        removeCommand.Register(fileCommands.RemoveFile, "file");
+        Command listCommand = commander.Register(fileCommands.ListFiles, (HelpText)"Lists all files.", "list", "ls");
+        _ = listCommand.Register(fileCommands.ListFiles, (HelpText)"Lists all files.", "files");
+        _ = listCommand.Register(hostCommands.ListHosts, (HelpText)"lists all hosts.", "hosts");
 
-        Command listCommand = commander.Register(fileCommands.ListFiles, "list", "ls");
-        listCommand.Register(fileCommands.ListFiles, "files");
-        listCommand.Register(hostCommands.ListHosts, "hosts");
-
-        commander.Register(hostCommands.CheckActiveHosts, "status", "check");
+        _ = commander.Register(hostCommands.CheckActiveHosts, (HelpText)"Checks the status of known hosts.", "status", "check");
     }
 
     public void ReadInput()
@@ -61,7 +60,7 @@ internal class InputHandler
             Console.CursorVisible = false;
             try
             {
-                if (!commander.Execute(input))
+                if (!commander.Execute(input, out _))
                 {
                     ConsoleExt.WriteLine("Unknown command!", ConsoleColor.Red);
                 }
@@ -71,11 +70,5 @@ internal class InputHandler
                 ConsoleExt.WriteLine($"An unexpected error occurred! {ex}", ConsoleColor.Red);
             }
         }
-    }
-
-    private void Exit(string _)
-    {
-        hostsManager.SaveHosts();
-        exit = true;
     }
 }
