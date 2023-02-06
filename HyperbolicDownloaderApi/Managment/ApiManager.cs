@@ -149,7 +149,7 @@ public class ApiManager
             return;
         }
 
-        _ = hostsToSend.RemoveAll(x => x.IPAddress == recivedEventArgs.IPEndPoint.Address.ToString());
+        _ = hostsToSend.RemoveAll(x => x.IPAddress == remoteIpAddress.ToString());
         hostsToSend.Add(localSocket);
 
         bool success = int.TryParse(recivedEventArgs.Message, out int remotePort);

@@ -19,8 +19,13 @@ public class HostCommands
     public void Discover(string _)
     {
         ApiManager.SendNotificationMessageNewLine("Running local discovery routine...", NotificationMessageType.Info);
+
+        int hostsCountBefore = hostsManager.Count;
+
         BroadcastClient.Send(ApiConfiguration.BroadcastPort, ApiConfiguration.PrivatePort.ToString());
         Thread.Sleep(3000);
+
+        ApiManager.SendNotificationMessageNewLine($"Found {hostsManager.Count - hostsCountBefore} host(s)", NotificationMessageType.Info);
     }
 
     public void CheckActiveHosts(string _)
