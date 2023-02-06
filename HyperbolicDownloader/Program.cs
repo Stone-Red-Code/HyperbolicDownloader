@@ -45,6 +45,14 @@ internal static class Program
             Console.WriteLine();
         }
 
+        await Initialize();
+
+        inputHandler.ReadInput();
+        Close();
+    }
+
+    private static async Task Initialize()
+    {
         Console.WriteLine("Searching for a UPnP/NAT-PMP device...");
         _ = await ApiManager.OpenPorts();
 
@@ -54,7 +62,7 @@ internal static class Program
         Console.WriteLine("Starting TCP listener...");
         if (!apiManager.StartTcpListener())
         {
-            Console.ReadLine();
+            _ = Console.ReadLine();
         }
 
         Console.WriteLine("Starting broadcast listener...");
@@ -77,9 +85,6 @@ internal static class Program
         Console.WriteLine($"{activeHostsCount} active host(s).");
 
         ConsoleExt.WriteLine("Ready", ConsoleColor.Green);
-
-        inputHandler.ReadInput();
-        Close();
     }
 
     private static void ApiManager_OnNotificationMessageRecived(object? sender, NotificationMessageEventArgs e)

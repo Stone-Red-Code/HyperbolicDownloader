@@ -72,7 +72,7 @@ public class HostCommands
         string portInput = parts[1];
 
         _ = int.TryParse(portInput, out int port);
-        if (port < 1000 || port >= 6000)
+        if (port is < 1000 or >= 6000)
         {
             ApiManager.SendNotificationMessageNewLine("Invalid port number!", NotificationMessageType.Error);
             return;
@@ -112,7 +112,7 @@ public class HostCommands
 
         _ = int.TryParse(portInput, out int port);
 
-        if (port < 1000 || port >= 6000)
+        if (port is < 1000 or >= 6000)
         {
             ApiManager.SendNotificationMessageNewLine("Invalid port number!", NotificationMessageType.Error);
             return;

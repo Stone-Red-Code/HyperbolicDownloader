@@ -152,7 +152,7 @@ public class DownloadCommands
 
             if (!Directory.Exists(directoryPath))
             {
-                Directory.CreateDirectory(directoryPath);
+                _ = Directory.CreateDirectory(directoryPath);
             }
 
             using FileStream? fileStream = new FileStream(filePath, FileMode.Create);
