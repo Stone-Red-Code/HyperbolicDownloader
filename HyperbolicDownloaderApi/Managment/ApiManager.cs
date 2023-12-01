@@ -81,6 +81,11 @@ public class ApiManager
             SendNotificationMessageNewLine($"An error occurred while mapping the private port ({ApiConfiguration.PrivatePort}) to the public port ({ApiConfiguration.PublicPort})! Error message: {ex.Message}", NotificationMessageType.Error);
             return false;
         }
+        catch (SocketException ex)
+        {
+            SendNotificationMessageNewLine($"An error occurred while mapping the private port ({ApiConfiguration.PrivatePort}) to the public port ({ApiConfiguration.PublicPort})! Error message: {ex.Message}", NotificationMessageType.Error);
+            return false;
+        }
     }
 
     public static void ClosePorts()

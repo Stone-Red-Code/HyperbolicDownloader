@@ -150,6 +150,7 @@ public class HostCommands
             {
                 ApiManager.SendNotificationMessageNewLine($"Success! Added {recivedHosts.Count} new host(s).", NotificationMessageType.Success);
                 hostsManager.AddRange(recivedHosts);
+                hostsManager.Add(new NetworkSocket(ipAddress.ToString(), port, DateTime.Now));
             }
             else
             {
