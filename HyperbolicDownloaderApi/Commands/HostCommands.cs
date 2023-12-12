@@ -148,9 +148,14 @@ public class HostCommands
 
             if (recivedHosts is not null)
             {
-                ApiManager.SendNotificationMessageNewLine($"Success! Added {recivedHosts.Count} new host(s).", NotificationMessageType.Success);
-                hostsManager.AddRange(recivedHosts);
-                hostsManager.Add(new NetworkSocket(ipAddress.ToString(), port, DateTime.Now));
+                int newHosts = hostsManager.AddRange(recivedHosts);
+
+                if (hostsManager.Add(new NetworkSocket(ipAddress.ToString(), port, DateTime.Now)))
+                {
+                    newHosts++;
+                }
+
+                ApiManager.SendNotificationMessageNewLine($"Success! Added {newHosts} new host(s).", NotificationMessageType.Success);
             }
             else
             {

@@ -10,23 +10,33 @@ public class HostsManager
     private List<NetworkSocket> hosts = new List<NetworkSocket>();
     public int Count => hosts.Count;
 
-    public void AddRange(IEnumerable<NetworkSocket> hosts)
+    public int AddRange(IEnumerable<NetworkSocket> hosts)
     {
+        int newHosts = 0;
+
         foreach (NetworkSocket host in hosts)
         {
-            Add(host);
+            if (Add(host))
+            {
+                newHosts++;
+            }
         }
 
         SaveHosts();
+
+        return newHosts;
     }
 
-    public void Add(NetworkSocket host)
+    public bool Add(NetworkSocket host)
     {
         if (!Contains(host))
         {
             hosts.Add(host);
+            return true;
         }
         SaveHosts();
+
+        return false;
     }
 
     public void Remove(NetworkSocket host, bool forceRemove = false)
