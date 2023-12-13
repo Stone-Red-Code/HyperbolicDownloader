@@ -29,11 +29,12 @@ public class HostsManager
 
     public bool Add(NetworkSocket host)
     {
-        if (!Contains(host))
+        if (!Contains(host) && !host.Equals(ApiManager.GetLocalSocket()))
         {
             hosts.Add(host);
             return true;
         }
+
         SaveHosts();
 
         return false;

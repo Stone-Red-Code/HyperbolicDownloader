@@ -155,7 +155,14 @@ public class HostCommands
                     newHosts++;
                 }
 
-                ApiManager.SendNotificationMessageNewLine($"Success! Added {newHosts} new host(s).", NotificationMessageType.Success);
+                if (newHosts > 0)
+                {
+                    ApiManager.SendNotificationMessageNewLine($"Added {newHosts} new host(s).", NotificationMessageType.Success);
+                }
+                else
+                {
+                    ApiManager.SendNotificationMessageNewLine($"No new hosts added.", NotificationMessageType.Warning);
+                }
             }
             else
             {
