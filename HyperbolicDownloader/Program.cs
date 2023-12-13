@@ -107,5 +107,6 @@ internal static class Program
     {
         ApiManager.ClosePorts();
         apiManager.HostsManager.SaveHosts();
+        Environment.Exit(0);
     }
 }

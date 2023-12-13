@@ -103,7 +103,6 @@ public class ApiManager
         }
 
         SendNotificationMessageNewLine("Ports closed!", NotificationMessageType.Warning);
-        Environment.Exit(0);
     }
 
     public bool StartBroadcastListener()
@@ -130,6 +129,7 @@ public class ApiManager
             networkClient.ListenTo<List<NetworkSocket>>("DiscoverAnswer", DiscoverAnswer);
             networkClient.ListenTo<string>("Message", ReciveMessage);
             networkClient.ListenTo<string>("HasFile", HasFile);
+            networkClient.ListenTo<string>("GetFilesList", GetFileList);
             networkClient.StartListening(ApiConfiguration.PrivatePort);
         }
         catch (SocketException ex)
@@ -221,6 +221,13 @@ public class ApiManager
         SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Check if file exists [{recivedEventArgs.Data}]", NotificationMessageType.Log);
 
         await recivedEventArgs.SendResponseAsync(FilesManager.Contains(recivedEventArgs.Data));
+    }
+
+    private async void GetFileList(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
+    {
+        SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Requesting file list", NotificationMessageType.Log);
+
+        await recivedEventArgs.SendResponseAsync(FilesManager.ToList().Select(f => new HyperFileDto(f)).ToList());
     }
 
     private void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)

@@ -2,7 +2,9 @@
 using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
 
+using System.Diagnostics;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 
 namespace HyperbolicDownloaderApi.Commands;
@@ -80,6 +82,76 @@ public class FileCommands
             }
 
             ApiManager.SendNotificationMessageNewLine($"{index}) {fileInfo.FilePath}");
+            ApiManager.SendNotificationMessageNewLine($"Hash: {fileInfo.Hash}");
+            ApiManager.SendNotificationMessageNewLine(string.Empty);
+        }
+        Console.CursorTop--;
+    }
+
+    public void ListFilesRemote(string args)
+    {
+        string[] parts = args.Split(":");
+
+        if (parts.Length != 2)
+        {
+            ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: (xxx.xxx.xxx.xxx:yyyy)", NotificationMessageType.Error);
+            return;
+        }
+
+        string ipAddressInput = parts[0];
+        string portInput = parts[1];
+        IPAddress? ipAddress;
+
+        _ = int.TryParse(portInput, out int port);
+
+        if (port is < 1000 or >= 6000)
+        {
+            ApiManager.SendNotificationMessageNewLine("Invalid port number!", NotificationMessageType.Error);
+            return;
+        }
+        else if (!IPAddress.TryParse(ipAddressInput, out ipAddress))
+        {
+            try
+            {
+                ipAddress = Dns.GetHostAddresses(ipAddressInput).FirstOrDefault();
+            }
+            catch (SocketException ex)
+            {
+                Debug.WriteLine(ex);
+            }
+        }
+
+        if (ipAddress is null)
+        {
+            ApiManager.SendNotificationMessageNewLine("Invalid IP address!", NotificationMessageType.Error);
+            return;
+        }
+
+        Task<List<HyperFileDto>?> sendTask = NetworkClient.SendAsync<List<HyperFileDto>>(ipAddress, port, "GetFilesList", string.Empty);
+
+        _ = sendTask.Wait(1000);
+
+        if (!sendTask.IsCompletedSuccessfully)
+        {
+            ApiManager.SendNotificationMessageNewLine("Invalid host!", NotificationMessageType.Error);
+            return;
+        }
+
+        List<HyperFileDto>? fileInfos = sendTask.Result;
+
+        if (fileInfos is null || fileInfos.Count == 0)
+        {
+            ApiManager.SendNotificationMessageNewLine("No tracked files!", NotificationMessageType.Warning);
+            return;
+        }
+
+        int index = 0;
+
+        foreach (HyperFileDto fileInfo in fileInfos)
+        {
+            index++;
+
+            ApiManager.SendNotificationMessageNewLine($"{index}) {fileInfo.Name}");
             ApiManager.SendNotificationMessageNewLine($"Hash: {fileInfo.Hash}");
             ApiManager.SendNotificationMessageNewLine(string.Empty);
         }

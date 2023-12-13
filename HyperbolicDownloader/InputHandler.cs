@@ -43,7 +43,8 @@ internal class InputHandler
         _ = removeCommand.Register(hostCommands.RemoveHost, (HelpText)"Removes a host from the list of known hosts.", "host");
 
         Command listCommand = commander.Register(fileCommands.ListFiles, (HelpText)"Lists all files.", "list", "ls");
-        _ = listCommand.Register(fileCommands.ListFiles, (HelpText)"Lists all files.", "files");
+        Command listFilesCommand = listCommand.Register(fileCommands.ListFiles, (HelpText)"Lists all files.", "files");
+        _ = listFilesCommand.Register(fileCommands.ListFilesRemote, (HelpText)"Lists all files of another host.", "remote");
         _ = listCommand.Register(hostCommands.ListHosts, (HelpText)"lists all hosts.", "hosts");
 
         _ = commander.Register(hostCommands.CheckActiveHosts, (HelpText)"Checks the status of known hosts.", "status", "check");
