@@ -94,14 +94,7 @@ public class ApiManager
         {
             try
             {
-                IEnumerable<Mapping>? mappings = device.GetAllMappingsAsync().GetAwaiter().GetResult();
-                foreach (Mapping? mapping in mappings)
-                {
-                    if (mapping.Description.Contains("HyperbolicDowloader") && mapping.PrivateIP.ToString() == portMapping?.PrivateIP.ToString())
-                    {
-                        device.DeletePortMapAsync(mapping).GetAwaiter().GetResult();
-                    }
-                }
+                device.DeletePortMapAsync(portMapping).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
