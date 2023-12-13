@@ -13,15 +13,14 @@ public class ApiManager
 {
     public static event EventHandler<NotificationMessageEventArgs>? OnNotificationMessageRecived;
 
-    public static IPAddress? PublicIpAddress => device?.GetExternalIPAsync().GetAwaiter().GetResult();
-    public FilesManager FilesManager { get; } = new();
-    public HostsManager HostsManager { get; } = new();
-
     private static readonly Random random = new();
     private static NatDevice? device;
     private static Mapping? portMapping;
     private readonly BroadcastClient broadcastClient = new BroadcastClient();
     private readonly NetworkClient networkClient;
+    public static IPAddress? PublicIpAddress => device?.GetExternalIPAsync().GetAwaiter().GetResult();
+    public FilesManager FilesManager { get; } = new();
+    public HostsManager HostsManager { get; } = new();
 
     public ApiManager()
     {
@@ -106,7 +105,7 @@ public class ApiManager
             }
             catch (Exception ex)
             {
-                SendNotificationMessageNewLine(ex.ToString(), NotificationMessageType.Error);
+                SendNotificationMessageNewLine(ex.Message, NotificationMessageType.Error);
             }
         }
 
@@ -114,10 +113,20 @@ public class ApiManager
         Environment.Exit(0);
     }
 
-    public void StartBroadcastListener()
+    public bool StartBroadcastListener()
     {
-        broadcastClient.StartListening(ApiConfiguration.BroadcastPort);
-        broadcastClient.OnBroadcastRecived += BroadcastClient_OnBroadcastRecived;
+        try
+        {
+            broadcastClient.StartListening(ApiConfiguration.BroadcastPort);
+            broadcastClient.OnBroadcastRecived += BroadcastClient_OnBroadcastRecived;
+        }
+        catch (SocketException ex)
+        {
+            SendNotificationMessageNewLine($"An error occurred while starting the TCP listener! Error message: {ex.Message}", NotificationMessageType.Error); // net stop hens && net start hns
+            return false;
+        }
+
+        return true;
     }
 
     public bool StartTcpListener()
@@ -137,6 +146,16 @@ public class ApiManager
         }
 
         return true;
+    }
+
+    internal static void SendNotificationMessage(string message, NotificationMessageType messageType = NotificationMessageType.Info)
+    {
+        OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message));
+    }
+
+    internal static void SendNotificationMessageNewLine(string message, NotificationMessageType messageType = NotificationMessageType.Info)
+    {
+        OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message + Environment.NewLine));
     }
 
     private async void BroadcastClient_OnBroadcastRecived(object? sender, BroadcastRecivedEventArgs recivedEventArgs)
@@ -161,7 +180,7 @@ public class ApiManager
 
         if (success)
         {
-            HostsManager.Add(new NetworkSocket(remoteIpAddress.ToString(), remotePort, DateTime.Now));
+            _ = HostsManager.Add(new NetworkSocket(remoteIpAddress.ToString(), remotePort, DateTime.Now));
             try
             {
                 await NetworkClient.SendAsync(recivedEventArgs.IPEndPoint.Address, remotePort, "DiscoverAnswer", hostsToSend);
@@ -176,11 +195,14 @@ public class ApiManager
     private void DiscoverAnswer(object? sender, MessageRecivedEventArgs<List<NetworkSocket>> recivedEventArgs)
     {
         SendNotificationMessageNewLine($"Received answer from {recivedEventArgs.IpAddress}. Returned {recivedEventArgs.Data.Count} host(s).", NotificationMessageType.Info);
-        HostsManager.AddRange(recivedEventArgs.Data);
+        SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Discovery answer {string.Join(", ", recivedEventArgs.Data)}", NotificationMessageType.Log);
+        _ = HostsManager.AddRange(recivedEventArgs.Data);
     }
 
     private async void GetHostList(object? sender, MessageRecivedEventArgs<NetworkSocket> recivedEventArgs)
     {
+        SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Requesting file list", NotificationMessageType.Log);
+
         List<NetworkSocket> hostsToSend = HostsManager.ToList();
 
         NetworkSocket? localSocket = GetLocalSocket();
@@ -195,7 +217,7 @@ public class ApiManager
 
         if (recivedEventArgs.Data.Port != 0)
         {
-            HostsManager.Add(recivedEventArgs.Data);
+            _ = HostsManager.Add(recivedEventArgs.Data);
         }
 
         await recivedEventArgs.SendResponseAsync(hostsToSend);
@@ -203,21 +225,13 @@ public class ApiManager
 
     private async void HasFile(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
     {
+        SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Check if file exists [{recivedEventArgs.Data}]", NotificationMessageType.Log);
+
         await recivedEventArgs.SendResponseAsync(FilesManager.Contains(recivedEventArgs.Data));
     }
 
     private void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
     {
         SendNotificationMessageNewLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.", NotificationMessageType.Info);
-    }
-
-    internal static void SendNotificationMessage(string message, NotificationMessageType messageType = NotificationMessageType.Info)
-    {
-        OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message));
-    }
-
-    internal static void SendNotificationMessageNewLine(string message, NotificationMessageType messageType = NotificationMessageType.Info)
-    {
-        OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message + Environment.NewLine));
     }
 }

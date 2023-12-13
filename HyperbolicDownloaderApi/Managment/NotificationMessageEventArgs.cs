@@ -15,6 +15,7 @@ public class NotificationMessageEventArgs : EventArgs
 public enum NotificationMessageType
 {
     Info,
+    Log,
     Success,
     Warning,
     Error

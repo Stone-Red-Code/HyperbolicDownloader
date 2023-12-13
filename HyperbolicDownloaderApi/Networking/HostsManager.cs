@@ -12,16 +12,7 @@ public class HostsManager
 
     public int AddRange(IEnumerable<NetworkSocket> hosts)
     {
-        int newHosts = 0;
-
-        foreach (NetworkSocket host in hosts)
-        {
-            if (Add(host))
-            {
-                newHosts++;
-            }
-        }
-
+        int newHosts = hosts.Count(Add);
         SaveHosts();
 
         return newHosts;
@@ -44,14 +35,14 @@ public class HostsManager
     {
         if (DateTime.Now - host.LastActive >= new TimeSpan(24, 0, 0) || forceRemove)
         {
-            _ = hosts.RemoveAll(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
+            _ = hosts.RemoveAll(x => x.Equals(host));
         }
         SaveHosts();
     }
 
     public bool Contains(NetworkSocket host)
     {
-        return hosts.Any(x => x.IPAddress == host.IPAddress && x.Port == host.Port);
+        return hosts.Exists(x => x.Equals(host));
     }
 
     public int CheckHostsActivity()
@@ -65,7 +56,7 @@ public class HostsManager
 
             try
             {
-                _ = tcpClient.ConnectAsync(host.IPAddress, host.Port).Wait(500);
+                _ = tcpClient.ConnectAsync(host.IPAddress, host.Port).Wait(1000);
                 Console.CursorLeft = 0;
                 if (tcpClient.Connected)
                 {

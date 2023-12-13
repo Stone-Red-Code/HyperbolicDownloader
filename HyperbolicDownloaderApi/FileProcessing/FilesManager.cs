@@ -83,7 +83,7 @@ public class FilesManager
 
     public bool Contains(string? hash)
     {
-        return files.Any(f => f.Hash == hash);
+        return files.Exists(f => f.Hash == hash);
     }
 
     public List<PrivateHyperFileInfo> ToList()

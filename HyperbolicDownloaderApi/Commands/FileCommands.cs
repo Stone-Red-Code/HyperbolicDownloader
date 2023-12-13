@@ -32,11 +32,24 @@ public class FileCommands
         }
     }
 
-    public void RemoveFile(string hash)
+    public void RemoveFile(string args)
     {
-        hash = hash.Trim().ToLower();
+        args = args.Trim().ToLower();
 
-        if (filesManager.TryRemove(hash))
+        if (int.TryParse(args, out int index))
+        {
+            List<PrivateHyperFileInfo> fileInfos = filesManager.ToList();
+
+            if (index < 1 || index > fileInfos.Count)
+            {
+                ApiManager.SendNotificationMessageNewLine("Invalid index!", NotificationMessageType.Error);
+                return;
+            }
+
+            args = fileInfos[index - 1].Hash;
+        }
+
+        if (filesManager.TryRemove(args))
         {
             ApiManager.SendNotificationMessageNewLine($"Successfully removed file!", NotificationMessageType.Success);
         }
@@ -46,7 +59,7 @@ public class FileCommands
         }
     }
 
-    public void ListFiles(string _)
+    public void ListFiles(string searchString)
     {
         int index = 0;
         List<PrivateHyperFileInfo> fileInfos = filesManager.ToList();
@@ -60,6 +73,12 @@ public class FileCommands
         foreach (PrivateHyperFileInfo fileInfo in fileInfos)
         {
             index++;
+
+            if (!string.IsNullOrWhiteSpace(searchString) && !fileInfo.FilePath.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             ApiManager.SendNotificationMessageNewLine($"{index}) {fileInfo.FilePath}");
             ApiManager.SendNotificationMessageNewLine($"Hash: {fileInfo.Hash}");
             ApiManager.SendNotificationMessageNewLine(string.Empty);
@@ -67,7 +86,7 @@ public class FileCommands
         Console.CursorTop--;
     }
 
-    public void GenerateFileSingle(string hash)
+    public void GenerateFileSingle(string args)
     {
         string directoryPath = Path.Combine(ApiConfiguration.BasePath, "GeneratedFiles");
         if (!Directory.Exists(directoryPath))
@@ -75,9 +94,23 @@ public class FileCommands
             _ = Directory.CreateDirectory(directoryPath);
         }
 
-        hash = hash.Trim().ToLower();
+        args = args.Trim().ToLower();
 
-        if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
+        PrivateHyperFileInfo? localHyperFileInfo;
+
+        if (int.TryParse(args, out int index))
+        {
+            List<PrivateHyperFileInfo> fileInfos = filesManager.ToList();
+
+            if (index < 1 || index > fileInfos.Count)
+            {
+                ApiManager.SendNotificationMessageNewLine("Invalid index!", NotificationMessageType.Error);
+                return;
+            }
+
+            localHyperFileInfo = fileInfos[index - 1];
+        }
+        else if (!filesManager.TryGet(args, out localHyperFileInfo))
         {
             ApiManager.SendNotificationMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
             return;
@@ -86,7 +119,7 @@ public class FileCommands
         string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
         string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
 
-        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
+        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(args);
 
         NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
@@ -106,7 +139,7 @@ public class FileCommands
         ApiManager.SendNotificationMessageNewLine($"File saved at: {Path.GetFullPath(filePath)}");
     }
 
-    public void GenerateFileFull(string hash)
+    public void GenerateFileFull(string args)
     {
         string directoryPath = Path.Combine(ApiConfiguration.BasePath, "GeneratedFiles");
         if (!Directory.Exists(directoryPath))
@@ -114,9 +147,23 @@ public class FileCommands
             _ = Directory.CreateDirectory(directoryPath);
         }
 
-        hash = hash.Trim().ToLower();
+        args = args.Trim().ToLower();
 
-        if (!filesManager.TryGet(hash, out PrivateHyperFileInfo? localHyperFileInfo))
+        PrivateHyperFileInfo? localHyperFileInfo;
+
+        if (int.TryParse(args, out int index))
+        {
+            List<PrivateHyperFileInfo> fileInfos = filesManager.ToList();
+
+            if (index < 1 || index > fileInfos.Count)
+            {
+                ApiManager.SendNotificationMessageNewLine("Invalid index!", NotificationMessageType.Error);
+                return;
+            }
+
+            localHyperFileInfo = fileInfos[index - 1];
+        }
+        else if (!filesManager.TryGet(args, out localHyperFileInfo))
         {
             ApiManager.SendNotificationMessageNewLine("The file is not being tracked!", NotificationMessageType.Error);
             return;
@@ -125,7 +172,7 @@ public class FileCommands
         string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
         string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
 
-        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(hash);
+        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(args);
 
         NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
@@ -148,7 +195,7 @@ public class FileCommands
 
             Console.CursorLeft = 0;
 
-            Task<bool> sendTask = NetworkClient.SendAsync<bool>(ipAddress!, host.Port, "HasFile", hash);
+            Task<bool> sendTask = NetworkClient.SendAsync<bool>(ipAddress!, host.Port, "HasFile", args);
 
             _ = sendTask.Wait(1000);
 

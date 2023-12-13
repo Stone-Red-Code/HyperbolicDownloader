@@ -67,6 +67,20 @@ public class HostCommands
     {
         string[] parts = args.Split(":");
 
+        if (int.TryParse(args, out int index))
+        {
+            if (hostsManager.Count < index || index < 1)
+            {
+                ApiManager.SendNotificationMessageNewLine("Invalid index!", NotificationMessageType.Error);
+                return;
+            }
+
+            hostsManager.Remove(hostsManager.ToList()[index - 1], true);
+            ApiManager.SendNotificationMessageNewLine($"Successfully Removed host!", NotificationMessageType.Success);
+
+            return;
+        }
+
         if (parts.Length != 2)
         {
             ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: (xxx.xxx.xxx.xxx:yyyy)", NotificationMessageType.Error);
@@ -144,7 +158,17 @@ public class HostCommands
         {
             ApiManager.SendNotificationMessageNewLine("Waiting for response...", NotificationMessageType.Info);
             NetworkSocket? localSocket = ApiManager.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0, DateTime.MinValue);
-            List<NetworkSocket>? recivedHosts = NetworkClient.Send<List<NetworkSocket>>(ipAddress, port, "GetHostsList", localSocket);
+            Task<List<NetworkSocket>?> sendTask = NetworkClient.SendAsync<List<NetworkSocket>>(ipAddress, port, "GetHostsList", localSocket);
+
+            _ = sendTask.Wait(5000);
+
+            if (!sendTask.IsCompletedSuccessfully)
+            {
+                ApiManager.SendNotificationMessageNewLine($"No response from {ipAddress}:{port}", NotificationMessageType.Error);
+                return;
+            }
+
+            List<NetworkSocket>? recivedHosts = sendTask.Result;
 
             if (recivedHosts is not null)
             {

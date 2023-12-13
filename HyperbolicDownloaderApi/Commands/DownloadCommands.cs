@@ -47,7 +47,7 @@ public class DownloadCommands
             return;
         }
 
-        hostsManager.AddRange(publicHyperFileInfo.Hosts);
+        _ = hostsManager.AddRange(publicHyperFileInfo.Hosts);
         GetFile(publicHyperFileInfo.Hash);
     }
 
@@ -109,7 +109,7 @@ public class DownloadCommands
 
             byte[] bytesToSend = Encoding.ASCII.GetBytes($"Download {hash}");
             nwStream.Write(bytesToSend);
-            nwStream.ReadTimeout = 30000;
+            nwStream.ReadTimeout = 5000;
 
             int bytesRead;
             try
@@ -157,9 +157,8 @@ public class DownloadCommands
 
             using FileStream? fileStream = new FileStream(filePath, FileMode.Create);
 
-            int bytesInOneSecond = 0;
-            int unitsPerSecond = 0;
-            string unit = "Kb";
+            int bytesPerSecond = 0;
+            int transferRate = 0;
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -182,26 +181,16 @@ public class DownloadCommands
                 fileStream.Write(reciveBuffer, 0, bytesRead);
                 totalBytesRead += bytesRead;
 
-                bytesInOneSecond += bytesRead;
+                bytesPerSecond += bytesRead;
 
                 if (stopWatch.Elapsed.TotalSeconds >= 1)
                 {
-                    unitsPerSecond = (int)(bytesInOneSecond * stopWatch.Elapsed.TotalSeconds);
-                    if (unitsPerSecond > 125000)
-                    {
-                        unitsPerSecond /= 125000;
-                        unit = "Mb";
-                    }
-                    else
-                    {
-                        unitsPerSecond /= 125;
-                        unit = "Kb";
-                    }
-                    bytesInOneSecond = 0;
+                    transferRate = bytesPerSecond;
+                    bytesPerSecond = 0;
                     stopWatch.Restart();
                 }
 
-                ApiManager.SendNotificationMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {totalBytesRead / 1000}/{fileSize / 1000}KB [{unitsPerSecond}{unit}/s]    ");
+                ApiManager.SendNotificationMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {DisplayFileSize(totalBytesRead)}/{DisplayFileSize(fileSize)} [{DisplayTransferRate(transferRate)}]      ");
             }
 
             fileStream.Close();
@@ -232,5 +221,39 @@ public class DownloadCommands
         }
         ApiManager.SendNotificationMessageNewLine("None of the available hosts have the requested file!", NotificationMessageType.Error);
         hostsManager.SaveHosts();
+    }
+
+    private string DisplayTransferRate(long bytesPerSecond)
+    {
+        string[] ordinals = new[] { "", "K", "M", "G", "T", "P", "E" };
+
+        decimal rate = bytesPerSecond * 8;
+
+        int ordinal = 0;
+
+        while (rate > 1000)
+        {
+            rate /= 1000;
+            ordinal++;
+        }
+
+        return $"{Math.Round(rate, 0, MidpointRounding.AwayFromZero)}{ordinals[ordinal]}bps";
+    }
+
+    private string DisplayFileSize(long bytes)
+    {
+        string[] ordinals = new[] { "", "K", "M", "G", "T", "P", "E" };
+
+        decimal rate = bytes;
+
+        int ordinal = 0;
+
+        while (rate > 1000)
+        {
+            rate /= 1000;
+            ordinal++;
+        }
+
+        return $"{Math.Round(rate, 0, MidpointRounding.AwayFromZero)}{ordinals[ordinal]}B";
     }
 }

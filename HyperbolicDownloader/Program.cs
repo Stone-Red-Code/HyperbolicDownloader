@@ -22,7 +22,7 @@ internal static class Program
         if (File.Exists(ApiConfiguration.HostsFilePath))
         {
             string hostsJson = await File.ReadAllTextAsync(ApiConfiguration.HostsFilePath);
-            apiManager.HostsManager.AddRange(JsonSerializer.Deserialize<List<NetworkSocket>>(hostsJson) ?? new());
+            _ = apiManager.HostsManager.AddRange(JsonSerializer.Deserialize<List<NetworkSocket>>(hostsJson) ?? new());
         }
 
         if (File.Exists(ApiConfiguration.FilesInfoPath))
@@ -63,10 +63,15 @@ internal static class Program
         if (!apiManager.StartTcpListener())
         {
             _ = Console.ReadLine();
+            Environment.Exit(-1);
         }
 
-        Console.WriteLine("Starting broadcast listener...");
-        apiManager.StartBroadcastListener();
+        Console.WriteLine("Starting UDP listener...");
+        if (!apiManager.StartBroadcastListener())
+        {
+            _ = Console.ReadLine();
+            Environment.Exit(-2);
+        }
 
         int activeHostsCount = 0;
         if (apiManager.HostsManager.Count > 0)

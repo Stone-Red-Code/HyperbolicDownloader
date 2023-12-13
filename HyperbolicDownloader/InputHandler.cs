@@ -19,12 +19,14 @@ internal class InputHandler
         FileCommands fileCommands = new FileCommands(hostsManager, filesManager);
         DownloadCommands downloadCommands = new DownloadCommands(hostsManager, filesManager);
         ClientCommands clientCommands = new ClientCommands();
+        LogCommands logCommands = new LogCommands();
 
         _ = commander.Register(input => commander.PrintHelp(input), "help");
         _ = commander.Register(_ => Console.Clear(), (HelpText)"Clears the console.", "clear", "cls");
         _ = commander.Register(_ => exit = true, (HelpText)"Exits the application.", "exit", "quit");
         _ = commander.Register(clientCommands.ShowInfo, (HelpText)"Displays the private and public IP address.", "info", "inf");
         _ = commander.Register(hostCommands.Discover, (HelpText)"Tries to find other active hosts on the local network.", "discover", "disc");
+        _ = commander.Register(logCommands.Log, (HelpText)"Displays live log.", "log");
 
         Command getCommand = commander.Register(downloadCommands.GetFile, (HelpText)"Attempts to retrieve a file from another host using a hash.", "get");
         _ = getCommand.Register(downloadCommands.GetFileFrom, (HelpText)"Attempts to retrieve a file from another host using a .hyper file.", "from");

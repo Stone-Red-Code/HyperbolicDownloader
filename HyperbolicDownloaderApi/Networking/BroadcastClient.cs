@@ -11,9 +11,8 @@ internal class BroadcastClient
 {
     public event EventHandler<BroadcastRecivedEventArgs>? OnBroadcastRecived;
 
-    public bool IsListening { get; private set; } = false;
-
     private UdpClient? udpListener;
+    public bool IsListening { get; private set; } = false;
 
     public static void Send(int port, string message)
     {
@@ -58,7 +57,7 @@ internal class BroadcastClient
         udpListener = new UdpClient(port);
         IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, port);
 
-        _ = Task.Run(() =>
+        _ = new TaskFactory().StartNew(() =>
         {
             while (IsListening)
             {
@@ -67,7 +66,7 @@ internal class BroadcastClient
 
                 OnBroadcastRecived?.Invoke(this, new BroadcastRecivedEventArgs(groupEP, message));
             }
-        });
+        }, TaskCreationOptions.LongRunning);
     }
 
     public void StopListening()
