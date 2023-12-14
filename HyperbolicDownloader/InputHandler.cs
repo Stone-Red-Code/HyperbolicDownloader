@@ -30,7 +30,7 @@ internal class InputHandler
         _ = commander.Register(hostCommands.Sync, (HelpText)"Syncs the host list", "sync");
 
         Command logCommand = commander.Register((_) => logCommands.Log(false), (HelpText)"Displays live log.", "log");
-        _ = logCommand.Register((_) => logCommands.Log(true), (HelpText)"Displays live log.", "debug");
+        _ = logCommand.Register((_) => logCommands.Log(true), (HelpText)"Displays live debug log.", "debug");
 
         Command getCommand = commander.Register(downloadCommands.GetFile, (HelpText)"Attempts to retrieve a file from another host using a hash.", "get");
         _ = getCommand.Register(downloadCommands.GetFileFrom, (HelpText)"Attempts to retrieve a file from another host using a .hyper file.", "from");
