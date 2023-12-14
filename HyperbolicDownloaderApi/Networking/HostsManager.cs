@@ -150,7 +150,10 @@ public class HostsManager
 
     public void SaveHosts()
     {
-        hosts = hosts.OrderByDescending(h => h.LastActive).ToList();
+        hosts = hosts
+            .OrderByDescending(s => s.DownloadSpeed)
+            .ThenByDescending(s => s.LastActive)
+            .ToList();
         File.WriteAllText(ApiConfiguration.HostsFilePath, JsonSerializer.Serialize(hosts));
     }
 }
