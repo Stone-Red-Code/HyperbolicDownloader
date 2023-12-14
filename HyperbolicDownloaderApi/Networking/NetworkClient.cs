@@ -94,7 +94,7 @@ internal class NetworkClient(FilesManager filesManager)
                 {
                     ApiManager.SendNotificationMessageNewLine("Listening for connections...", NotificationMessageType.Debug);
 
-                    using TcpClient client = tcpListener.AcceptTcpClient();
+                    TcpClient client = tcpListener.AcceptTcpClient();
 
                     ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Connected", NotificationMessageType.Debug);
 
@@ -178,6 +178,8 @@ internal class NetworkClient(FilesManager filesManager)
         }
 
         ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > End of request", NotificationMessageType.Debug);
+
+        client.Close();
     }
 
     private async Task Upload(TcpClient client, string hash)
