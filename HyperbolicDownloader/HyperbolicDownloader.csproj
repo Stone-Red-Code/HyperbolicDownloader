@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Console.Commander.NET" Version="1.0.1" />
+    <PackageReference Include="Console.Commander.NET" Version="1.0.1.1" />
     <PackageReference Include="Stone_Red-C-Sharp-Utilities" Version="1.0.3.1" />
   </ItemGroup>
 
