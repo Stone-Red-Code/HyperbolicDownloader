@@ -194,7 +194,7 @@ public class ApiManager
 
     private async void GetHostList(object? sender, MessageRecivedEventArgs<NetworkSocket> recivedEventArgs)
     {
-        SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Requesting file list", NotificationMessageType.Log);
+        SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Requesting host list", NotificationMessageType.Log);
 
         List<NetworkSocket> hostsToSend = HostsManager.ToList();
 
