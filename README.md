@@ -1,6 +1,6 @@
 # HyperbolicDownloader
 
-> A cross-platform P2P file sharing CLI client
+> A cross-platform P2P file sharing CLI tool & protocol
 
 ## Usage
 
