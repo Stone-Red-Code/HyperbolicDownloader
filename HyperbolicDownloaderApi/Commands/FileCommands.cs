@@ -128,7 +128,7 @@ public class FileCommands
 
         if (parts.Length != 2)
         {
-            ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: (xxx.xxx.xxx.xxx:yyyy)", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: <ip address>:<port>", NotificationMessageType.Error);
             return;
         }
 

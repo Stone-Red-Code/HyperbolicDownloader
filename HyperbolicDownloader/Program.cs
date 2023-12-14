@@ -88,7 +88,7 @@ internal static class Program
         if (activeHostsCount == 0)
         {
             ConsoleExt.WriteLine("No active hosts found!", ConsoleColor.Red);
-            ConsoleExt.WriteLine("Use 'add host xxx.xxx.xxx.xxx:yyyy' to add a new host or use 'discover' to find hosts in the local network.", ConsoleColor.Red);
+            ConsoleExt.WriteLine("Use 'add host <ip address>:<port>' to add a new host or use 'discover' to find hosts in the local network.", ConsoleColor.Red);
         }
 
         Console.WriteLine($"{apiManager.HostsManager.Count} known host(s).");

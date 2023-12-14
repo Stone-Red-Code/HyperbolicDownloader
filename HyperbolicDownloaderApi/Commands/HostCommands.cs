@@ -35,7 +35,7 @@ public class HostCommands
         if (activeHostsCount == 0)
         {
             ApiManager.SendNotificationMessageNewLine("No active hosts found!", NotificationMessageType.Error);
-            ApiManager.SendNotificationMessageNewLine("Use 'add host xxx.xxx.xxx.xxx:yyyy' to add a new host.", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Use 'add host <ip address>:<port>' to add a new host.", NotificationMessageType.Error);
         }
 
         ApiManager.SendNotificationMessageNewLine(string.Empty, NotificationMessageType.Info);
@@ -85,7 +85,7 @@ public class HostCommands
 
         if (parts.Length != 2)
         {
-            ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: (xxx.xxx.xxx.xxx:yyyy)", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: <ip address>:<port>", NotificationMessageType.Error);
             return;
         }
 
@@ -123,7 +123,7 @@ public class HostCommands
 
         if (parts.Length != 2)
         {
-            ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: (xxx.xxx.xxx.xxx:yyyy)", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Invalid format! Use this format: <ip address>:<port>", NotificationMessageType.Error);
             return;
         }
 
