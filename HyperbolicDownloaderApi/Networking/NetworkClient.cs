@@ -209,6 +209,7 @@ internal class NetworkClient
         }
         finally
         {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Closing connection", NotificationMessageType.Log);
             client.Close();
         }
     }
