@@ -98,7 +98,7 @@ public class DirectoryWatcher
             }
         }
 
-        ApiManager.SendNotificationMessageNewLine($"Finished checking for new files. Found {newFilesCount} new files.", NotificationMessageType.Log);
+        ApiManager.SendNotificationMessageNewLine($"Finished checking for new files. Found {newFilesCount} new file(s).", NotificationMessageType.Log);
 
         filesManager.RemoveFilesThatDontExist();
     }
