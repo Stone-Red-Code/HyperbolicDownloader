@@ -4,6 +4,7 @@ using HyperbolicDownloaderApi.Networking;
 
 using Stone_Red_Utilities.ConsoleExtentions;
 
+using System.Reflection;
 using System.Text.Json;
 
 namespace HyperbolicDownloader;
@@ -30,6 +31,10 @@ internal static class Program
             string filesJson = await File.ReadAllTextAsync(ApiConfiguration.FilesInfoPath);
             apiManager.FilesManager.AddRange(JsonSerializer.Deserialize<List<PrivateHyperFileInfo>>(filesJson) ?? new());
         }
+
+        Console.WriteLine($"HyperbolicDownloader - {Assembly.GetExecutingAssembly().GetName().Version}");
+        ConsoleExt.WriteLine("https://github.com/Stone-Red-Code/HyperbolicDownloader", ConsoleColor.Blue);
+        Console.WriteLine();
 
         InputHandler inputHandler = new InputHandler(apiManager.HostsManager, apiManager.FilesManager);
 
