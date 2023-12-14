@@ -98,7 +98,7 @@ public class HostsManager
     {
         int newHostsCount = 0;
 
-        foreach (NetworkSocket host in hosts)
+        foreach (NetworkSocket host in hosts.ToArray())
         {
             ApiManager.SendNotificationMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
 
@@ -122,7 +122,7 @@ public class HostsManager
                     }
                     else
                     {
-                        ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > No new host found", NotificationMessageType.Warning);
+                        ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > No new hosts found", NotificationMessageType.Warning);
                     }
 
                     host.LastActive = DateTime.Now;

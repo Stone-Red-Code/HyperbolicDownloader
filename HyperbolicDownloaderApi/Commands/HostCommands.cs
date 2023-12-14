@@ -211,7 +211,7 @@ public class HostCommands
 
         if (newHostsCount > 0)
         {
-            ApiManager.SendNotificationMessage($"Added {newHostsCount} new hosts).");
+            ApiManager.SendNotificationMessage($"Added {newHostsCount} new host(s).");
         }
         else
         {
