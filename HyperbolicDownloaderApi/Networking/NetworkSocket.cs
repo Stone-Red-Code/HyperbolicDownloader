@@ -6,6 +6,8 @@ public class NetworkSocket
     public int Port { get; set; }
     public DateTime LastActive { get; set; }
 
+    public long DownloadSpeed { get; set; }
+
     public NetworkSocket(string ipAddress, int port, DateTime lastActive)
     {
         IPAddress = ipAddress;

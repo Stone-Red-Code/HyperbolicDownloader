@@ -1,6 +1,7 @@
 ﻿using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
+using HyperbolicDownloaderApi.Utilities;
 
 using Stone_Red_Utilities.StringExtentions;
 
@@ -187,10 +188,11 @@ public class DownloadCommands
                 {
                     transferRate = bytesPerSecond;
                     bytesPerSecond = 0;
+                    host.DownloadSpeed = (host.DownloadSpeed + bytesPerSecond) / 2;
                     stopWatch.Restart();
                 }
 
-                ApiManager.SendNotificationMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {DisplayFileSize(totalBytesRead)}/{DisplayFileSize(fileSize)} [{DisplayTransferRate(transferRate)}]      ");
+                ApiManager.SendNotificationMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {UnitFormatter.FileSize(totalBytesRead)}/{UnitFormatter.FileSize(fileSize)} [{UnitFormatter.TransferRate(transferRate)}]      ");
             }
 
             fileStream.Close();
@@ -221,39 +223,5 @@ public class DownloadCommands
         }
         ApiManager.SendNotificationMessageNewLine("None of the available hosts have the requested file!", NotificationMessageType.Error);
         hostsManager.SaveHosts();
-    }
-
-    private string DisplayTransferRate(long bytesPerSecond)
-    {
-        string[] ordinals = new[] { "", "K", "M", "G", "T", "P", "E" };
-
-        decimal rate = bytesPerSecond * 8;
-
-        int ordinal = 0;
-
-        while (rate > 1000)
-        {
-            rate /= 1000;
-            ordinal++;
-        }
-
-        return $"{Math.Round(rate, 0, MidpointRounding.AwayFromZero)}{ordinals[ordinal]}bps";
-    }
-
-    private string DisplayFileSize(long bytes)
-    {
-        string[] ordinals = new[] { "", "K", "M", "G", "T", "P", "E" };
-
-        decimal rate = bytes;
-
-        int ordinal = 0;
-
-        while (rate > 1000)
-        {
-            rate /= 1000;
-            ordinal++;
-        }
-
-        return $"{Math.Round(rate, 0, MidpointRounding.AwayFromZero)}{ordinals[ordinal]}B";
     }
 }

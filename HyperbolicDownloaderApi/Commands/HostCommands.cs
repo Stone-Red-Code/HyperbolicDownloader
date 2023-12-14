@@ -1,5 +1,6 @@
 ﻿using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
+using HyperbolicDownloaderApi.Utilities;
 
 using System.Diagnostics;
 using System.Net;
@@ -58,6 +59,7 @@ public class HostCommands
             index++;
             ApiManager.SendNotificationMessageNewLine($"{index}) {host.IPAddress}:{host.Port}", NotificationMessageType.Info);
             ApiManager.SendNotificationMessageNewLine($"Last active: {host.LastActive}", NotificationMessageType.Info);
+            ApiManager.SendNotificationMessageNewLine($"Download speed: {(host.DownloadSpeed <= 0 ? "N/A" : UnitFormatter.TransferRate(host.DownloadSpeed))}", NotificationMessageType.Info);
             ApiManager.SendNotificationMessageNewLine(string.Empty, NotificationMessageType.Info);
         }
         Console.CursorTop--;
