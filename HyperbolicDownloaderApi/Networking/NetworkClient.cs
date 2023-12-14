@@ -177,9 +177,11 @@ internal class NetworkClient(FilesManager filesManager)
             ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Event not found", NotificationMessageType.Debug);
         }
 
-        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > End of request", NotificationMessageType.Debug);
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Closing connection", NotificationMessageType.Log);
 
         client.Close();
+
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Connection closed", NotificationMessageType.Log);
     }
 
     private async Task Upload(TcpClient client, string hash)
@@ -227,7 +229,10 @@ internal class NetworkClient(FilesManager filesManager)
         finally
         {
             ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Closing connection", NotificationMessageType.Log);
+
             client.Close();
+
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Connection closed", NotificationMessageType.Log);
         }
     }
 }
