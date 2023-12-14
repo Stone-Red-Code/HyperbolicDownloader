@@ -26,6 +26,7 @@ internal class InputHandler
         _ = commander.Register(_ => exit = true, (HelpText)"Exits the application.", "exit", "quit");
         _ = commander.Register(clientCommands.ShowInfo, (HelpText)"Displays the private and public IP address.", "info", "inf");
         _ = commander.Register(hostCommands.Discover, (HelpText)"Tries to find other active hosts on the local network.", "discover", "disc");
+        _ = commander.Register(hostCommands.Sync, (HelpText)"Syncs the host list", "sync");
         _ = commander.Register(logCommands.Log, (HelpText)"Displays live log.", "log");
 
         Command getCommand = commander.Register(downloadCommands.GetFile, (HelpText)"Attempts to retrieve a file from another host using a hash.", "get");

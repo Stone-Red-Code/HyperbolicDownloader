@@ -202,4 +202,20 @@ public class HostCommands
             ApiManager.SendNotificationMessageNewLine($"Invalid host! Error message: {ex.Message}", NotificationMessageType.Error);
         }
     }
+
+    public void Sync(string _)
+    {
+        int newHostsCount = hostsManager.Sync();
+
+        ApiManager.SendNotificationMessageNewLine(string.Empty, NotificationMessageType.Info);
+
+        if (newHostsCount > 0)
+        {
+            ApiManager.SendNotificationMessage($"Added {newHostsCount} new hosts).");
+        }
+        else
+        {
+            ApiManager.SendNotificationMessage($"No new hosts added.", NotificationMessageType.Warning);
+        }
+    }
 }

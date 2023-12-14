@@ -1,5 +1,6 @@
 ﻿using HyperbolicDownloaderApi.Managment;
 
+using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 
@@ -91,6 +92,55 @@ public class HostsManager
 
         SaveHosts();
         return activeHostsCount;
+    }
+
+    public int Sync()
+    {
+        int newHostsCount = 0;
+
+        foreach (NetworkSocket host in hosts)
+        {
+            ApiManager.SendNotificationMessage($"{host.IPAddress}:{host.Port} > ???", NotificationMessageType.Warning);
+
+            try
+            {
+                NetworkSocket? localSocket = ApiManager.GetLocalSocket() ?? new NetworkSocket("0.0.0.0", 0, DateTime.MinValue);
+
+                Task<List<NetworkSocket>?> sendTask = NetworkClient.SendAsync<List<NetworkSocket>>(IPAddress.Parse(host.IPAddress), host.Port, "GetHostsList", localSocket);
+
+                _ = sendTask.Wait(1000);
+
+                Console.CursorLeft = 0;
+                if (sendTask.IsCompletedSuccessfully)
+                {
+                    int newHosts = AddRange(sendTask.Result ?? new());
+                    newHostsCount += newHosts;
+
+                    if (newHosts > 0)
+                    {
+                        ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Found {newHosts} new hosts", NotificationMessageType.Success);
+                    }
+                    else
+                    {
+                        ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > No new host found", NotificationMessageType.Warning);
+                    }
+
+                    host.LastActive = DateTime.Now;
+                }
+                else
+                {
+                    ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
+                }
+            }
+            catch
+            {
+                Console.CursorLeft = 0;
+                ApiManager.SendNotificationMessageNewLine($"{host.IPAddress}:{host.Port} > Inactive", NotificationMessageType.Error);
+            }
+        }
+
+        SaveHosts();
+        return newHostsCount;
     }
 
     public List<NetworkSocket> ToList()
