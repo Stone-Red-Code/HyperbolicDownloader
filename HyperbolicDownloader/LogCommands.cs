@@ -55,6 +55,11 @@ internal class LogCommands
                 {
                     ConsoleExt.Write($"[{DateTime.Now}] ", ConsoleColor.DarkGray);
 
+                    if (e.NotificationMessageType == NotificationMessageType.Debug)
+                    {
+                        ConsoleExt.Write("[DEBUG] ", ConsoleColor.DarkYellow);
+                    }
+
                     byte[] ipAddressBytes = ipAddress.GetAddressBytes();
 
                     Array.Resize(ref ipAddressBytes, 8);
@@ -82,6 +87,12 @@ internal class LogCommands
                 else
                 {
                     ConsoleExt.Write($"[{DateTime.Now}] ", ConsoleColor.DarkGray);
+
+                    if (e.NotificationMessageType == NotificationMessageType.Debug)
+                    {
+                        ConsoleExt.Write("[DEBUG] ", ConsoleColor.DarkYellow);
+                    }
+
                     ConsoleExt.Write(e.Message, ConsoleColor.White);
                 }
             }
