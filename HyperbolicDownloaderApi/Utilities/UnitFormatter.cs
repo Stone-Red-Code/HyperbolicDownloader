@@ -1,9 +1,10 @@
 ﻿namespace HyperbolicDownloaderApi.Utilities;
+
 internal static class UnitFormatter
 {
     public static string TransferRate(long bytesPerSecond)
     {
-        string[] ordinals = new[] { "", "K", "M", "G", "T", "P", "E" };
+        string[] ordinals = ["", "K", "M", "G", "T", "P", "E"];
 
         decimal rate = bytesPerSecond * 8;
 
@@ -20,7 +21,7 @@ internal static class UnitFormatter
 
     public static string FileSize(long bytes)
     {
-        string[] ordinals = new[] { "", "K", "M", "G", "T", "P", "E" };
+        string[] ordinals = ["", "K", "M", "G", "T", "P", "E"];
 
         decimal rate = bytes;
 

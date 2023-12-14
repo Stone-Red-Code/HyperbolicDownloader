@@ -1,13 +1,7 @@
 ﻿namespace HyperbolicDownloaderApi.Networking;
 
-internal class DataContainer
+internal class DataContainer(string eventName, string jsonData)
 {
-    public string EventName { get; set; }
-    public string JsonData { get; set; }
-
-    public DataContainer(string eventName, string jsonData)
-    {
-        JsonData = jsonData;
-        EventName = eventName;
-    }
+    public string EventName { get; set; } = eventName;
+    public string JsonData { get; set; } = jsonData;
 }

@@ -5,7 +5,7 @@ namespace HyperbolicDownloaderApi.FileProcessing;
 public class PublicHyperFileInfo
 {
     public string Hash { get; set; } = string.Empty;
-    public List<NetworkSocket> Hosts { get; set; } = new();
+    public List<NetworkSocket> Hosts { get; set; } = [];
 
     public PublicHyperFileInfo()
     {

@@ -9,7 +9,7 @@ public class DirectoryWatcher
 {
     private readonly FilesManager filesManager;
 
-    private readonly List<string> directories = new();
+    private readonly List<string> directories = [];
     private readonly System.Timers.Timer timer = new(1);
 
     public DirectoryWatcher(FilesManager filesManager)

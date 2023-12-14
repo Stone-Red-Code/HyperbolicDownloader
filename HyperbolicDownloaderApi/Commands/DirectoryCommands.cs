@@ -3,15 +3,8 @@ using HyperbolicDownloaderApi.Managment;
 
 namespace HyperbolicDownloaderApi.Commands;
 
-public class DirectoryCommands
+public class DirectoryCommands(DirectoryWatcher directoryWatcher)
 {
-    private readonly DirectoryWatcher directoryWatcher;
-
-    public DirectoryCommands(DirectoryWatcher directoryWatcher)
-    {
-        this.directoryWatcher = directoryWatcher;
-    }
-
     public void AddDirectory(string directoryPath)
     {
         if (directoryWatcher.TryAdd(directoryPath, out string? message))

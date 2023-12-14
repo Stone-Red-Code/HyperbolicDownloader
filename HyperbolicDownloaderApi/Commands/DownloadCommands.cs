@@ -13,17 +13,8 @@ using System.Text.Json;
 
 namespace HyperbolicDownloaderApi.Commands;
 
-public class DownloadCommands
+public class DownloadCommands(HostsManager hostsManager, FilesManager filesManager)
 {
-    private readonly HostsManager hostsManager;
-    private readonly FilesManager filesManager;
-
-    public DownloadCommands(HostsManager hostsManager, FilesManager filesManager)
-    {
-        this.hostsManager = hostsManager;
-        this.filesManager = filesManager;
-    }
-
     public void GetFileFrom(string path)
     {
         if (string.IsNullOrWhiteSpace(path))

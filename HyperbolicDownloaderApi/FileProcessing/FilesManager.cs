@@ -7,7 +7,7 @@ namespace HyperbolicDownloaderApi.FileProcessing;
 
 public class FilesManager
 {
-    private readonly List<PrivateHyperFileInfo> files = new List<PrivateHyperFileInfo>();
+    private readonly List<PrivateHyperFileInfo> files = [];
 
     public bool TryAdd(string filePath, out PrivateHyperFileInfo? fileInfo, out string? errorMessage)
     {
@@ -95,7 +95,7 @@ public class FilesManager
 
     public List<PrivateHyperFileInfo> ToList()
     {
-        return files.ToList();
+        return [.. files];
     }
 
     internal void RemoveFilesThatDontExist()

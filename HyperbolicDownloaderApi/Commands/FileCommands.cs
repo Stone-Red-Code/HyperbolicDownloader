@@ -9,17 +9,9 @@ using System.Text.Json;
 
 namespace HyperbolicDownloaderApi.Commands;
 
-public class FileCommands
+public class FileCommands(HostsManager hostsManager, FilesManager filesManager)
 {
-    private readonly HostsManager hostsManager;
-
-    private readonly FilesManager filesManager;
-
-    public FileCommands(HostsManager hostsManager, FilesManager filesManager)
-    {
-        this.hostsManager = hostsManager;
-        this.filesManager = filesManager;
-    }
+    private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
 
     public void AddFile(string path)
     {
@@ -242,8 +234,7 @@ public class FileCommands
 
         publicHyperFileInfo.Hosts.Add(localHost);
 
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-        string json = JsonSerializer.Serialize(publicHyperFileInfo, options);
+        string json = JsonSerializer.Serialize(publicHyperFileInfo, jsonSerializerOptions);
 
         File.WriteAllText(filePath, json);
 
@@ -334,8 +325,7 @@ public class FileCommands
 
         publicHyperFileInfo.Hosts.Add(localHost);
 
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-        string json = JsonSerializer.Serialize(publicHyperFileInfo, options);
+        string json = JsonSerializer.Serialize(publicHyperFileInfo, jsonSerializerOptions);
 
         File.WriteAllText(filePath, json);
 

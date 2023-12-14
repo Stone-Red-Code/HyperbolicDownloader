@@ -28,19 +28,19 @@ internal static class Program
         if (File.Exists(ApiConfiguration.HostsFilePath))
         {
             string hostsJson = await File.ReadAllTextAsync(ApiConfiguration.HostsFilePath);
-            _ = apiManager.HostsManager.AddRange(JsonSerializer.Deserialize<List<NetworkSocket>>(hostsJson) ?? new());
+            _ = apiManager.HostsManager.AddRange(JsonSerializer.Deserialize<List<NetworkSocket>>(hostsJson) ?? []);
         }
 
         if (File.Exists(ApiConfiguration.FilesInfoPath))
         {
             string filesJson = await File.ReadAllTextAsync(ApiConfiguration.FilesInfoPath);
-            apiManager.FilesManager.AddRange(JsonSerializer.Deserialize<List<PrivateHyperFileInfo>>(filesJson) ?? new());
+            apiManager.FilesManager.AddRange(JsonSerializer.Deserialize<List<PrivateHyperFileInfo>>(filesJson) ?? []);
         }
 
         if (File.Exists(ApiConfiguration.DirectoriesInfoPath))
         {
             string directoriesJson = await File.ReadAllTextAsync(ApiConfiguration.DirectoriesInfoPath);
-            apiManager.DirectoryWatcher.AddRange(JsonSerializer.Deserialize<List<string>>(directoriesJson) ?? new());
+            apiManager.DirectoryWatcher.AddRange(JsonSerializer.Deserialize<List<string>>(directoriesJson) ?? []);
         }
 
         Console.WriteLine($"HyperbolicDownloader - {Assembly.GetExecutingAssembly().GetName().Version}");

@@ -5,20 +5,11 @@ using System.Text.Json;
 
 namespace HyperbolicDownloaderApi.Networking;
 
-internal class MessageRecivedEventArgs<T> : EventArgs
+internal class MessageRecivedEventArgs<T>(NetworkStream networkStream, IPAddress ipAddress, T data) : EventArgs
 {
-    private readonly NetworkStream networkStream;
+    public T Data { get; set; } = data;
 
-    public MessageRecivedEventArgs(NetworkStream networkStream, IPAddress ipAddress, T data)
-    {
-        this.networkStream = networkStream;
-        Data = data;
-        IpAddress = ipAddress;
-    }
-
-    public T Data { get; set; }
-
-    public IPAddress IpAddress { get; set; }
+    public IPAddress IpAddress { get; set; } = ipAddress;
 
     public async Task SendResponseAsync(object response)
     {

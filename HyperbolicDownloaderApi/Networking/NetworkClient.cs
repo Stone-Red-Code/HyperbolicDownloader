@@ -9,24 +9,15 @@ using System.Text.Json;
 
 namespace HyperbolicDownloaderApi.Networking;
 
-internal class NetworkClient
+internal class NetworkClient(FilesManager filesManager)
 {
-    private readonly FilesManager filesManager;
-    private readonly Dictionary<string, (Type type, Delegate method)> events = new();
+    private readonly Dictionary<string, (Type type, Delegate method)> events = [];
     private TcpListener? tcpListener;
     public bool IsListening { get; private set; } = false;
 
-    public NetworkClient(FilesManager filesManager)
-    {
-        this.filesManager = filesManager;
-    }
-
     public static async Task<T?> SendAsync<T>(IPAddress remoteIp, int remotePort, string eventName, object data)
     {
-        if (remoteIp is null)
-        {
-            throw new ArgumentNullException(nameof(remoteIp));
-        }
+        ArgumentNullException.ThrowIfNull(remoteIp);
 
         TcpClient client = new TcpClient();
 
@@ -57,10 +48,7 @@ internal class NetworkClient
 
     public static async Task SendAsync(IPAddress remoteIp, int remotePort, string eventName, object data)
     {
-        if (remoteIp is null)
-        {
-            throw new ArgumentNullException(nameof(remoteIp));
-        }
+        ArgumentNullException.ThrowIfNull(remoteIp);
 
         TcpClient client = new TcpClient();
 
@@ -125,9 +113,9 @@ internal class NetworkClient
 
                     DataContainer? dataContainer = JsonSerializer.Deserialize<DataContainer>(dataReceived);
 
-                    if (dataContainer is not null && events.ContainsKey(dataContainer.EventName))
+                    if (dataContainer is not null && events.TryGetValue(dataContainer.EventName, out (Type type, Delegate method) value))
                     {
-                        (Type type, Delegate method) = events[dataContainer.EventName];
+                        (Type type, Delegate method) = value;
 
                         Type eventArgsType = typeof(MessageRecivedEventArgs<>).MakeGenericType(type);
 

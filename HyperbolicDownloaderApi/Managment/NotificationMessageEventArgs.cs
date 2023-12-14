@@ -1,15 +1,9 @@
 ﻿namespace HyperbolicDownloaderApi.Managment;
 
-public class NotificationMessageEventArgs : EventArgs
+public class NotificationMessageEventArgs(NotificationMessageType notificationMessageType, string? message) : EventArgs
 {
-    public NotificationMessageType NotificationMessageType { get; }
-    public string? Message { get; }
-
-    public NotificationMessageEventArgs(NotificationMessageType notificationMessageType, string? message)
-    {
-        NotificationMessageType = notificationMessageType;
-        Message = message;
-    }
+    public NotificationMessageType NotificationMessageType { get; } = notificationMessageType;
+    public string? Message { get; } = message;
 }
 
 public enum NotificationMessageType

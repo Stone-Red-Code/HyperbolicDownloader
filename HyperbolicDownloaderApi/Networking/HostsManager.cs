@@ -8,7 +8,7 @@ namespace HyperbolicDownloaderApi.Networking;
 
 public class HostsManager
 {
-    private List<NetworkSocket> hosts = new List<NetworkSocket>();
+    private List<NetworkSocket> hosts = [];
     public int Count => hosts.Count;
 
     public int AddRange(IEnumerable<NetworkSocket> hosts)
@@ -48,7 +48,7 @@ public class HostsManager
 
     public int CheckHostsActivity()
     {
-        List<NetworkSocket> hostsToRemove = new List<NetworkSocket>();
+        List<NetworkSocket> hostsToRemove = [];
         int activeHostsCount = 0;
         foreach (NetworkSocket host in hosts)
         {
@@ -113,7 +113,7 @@ public class HostsManager
                 Console.CursorLeft = 0;
                 if (sendTask.IsCompletedSuccessfully)
                 {
-                    int newHosts = AddRange(sendTask.Result ?? new());
+                    int newHosts = AddRange(sendTask.Result ?? []);
                     newHostsCount += newHosts;
 
                     if (newHosts > 0)
@@ -145,15 +145,14 @@ public class HostsManager
 
     public List<NetworkSocket> ToList()
     {
-        return hosts.ToList();
+        return [.. hosts];
     }
 
     public void SaveHosts()
     {
-        hosts = hosts
-            .OrderByDescending(s => s.DownloadSpeed)
-            .ThenByDescending(s => s.LastActive)
-            .ToList();
+        hosts = [.. hosts
+                .OrderByDescending(s => s.DownloadSpeed)
+                .ThenByDescending(s => s.LastActive)];
         File.WriteAllText(ApiConfiguration.HostsFilePath, JsonSerializer.Serialize(hosts));
     }
 }

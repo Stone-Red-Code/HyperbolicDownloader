@@ -1,19 +1,12 @@
 ﻿namespace HyperbolicDownloaderApi.Networking;
 
-public class NetworkSocket
+public class NetworkSocket(string ipAddress, int port, DateTime lastActive)
 {
-    public string IPAddress { get; set; }
-    public int Port { get; set; }
-    public DateTime LastActive { get; set; }
+    public string IPAddress { get; set; } = ipAddress;
+    public int Port { get; set; } = port;
+    public DateTime LastActive { get; set; } = lastActive;
 
     public long DownloadSpeed { get; set; }
-
-    public NetworkSocket(string ipAddress, int port, DateTime lastActive)
-    {
-        IPAddress = ipAddress;
-        Port = port;
-        LastActive = lastActive;
-    }
 
     public override bool Equals(object? obj)
     {

@@ -8,15 +8,8 @@ using System.Net.Sockets;
 
 namespace HyperbolicDownloaderApi.Commands;
 
-public class HostCommands
+public class HostCommands(HostsManager hostsManager)
 {
-    private readonly HostsManager hostsManager;
-
-    public HostCommands(HostsManager hostsManager)
-    {
-        this.hostsManager = hostsManager;
-    }
-
     public void Discover(string _)
     {
         ApiManager.SendNotificationMessageNewLine("Running local discovery routine...", NotificationMessageType.Info);
