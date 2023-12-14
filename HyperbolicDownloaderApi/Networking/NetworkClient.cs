@@ -92,13 +92,24 @@ internal class NetworkClient(FilesManager filesManager)
             {
                 try
                 {
+                    ApiManager.SendNotificationMessageNewLine("Listening for connections...", NotificationMessageType.Debug);
+
                     TcpClient client = tcpListener.AcceptTcpClient();
+
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Connected", NotificationMessageType.Debug);
+
                     NetworkStream nwStream = client.GetStream();
                     byte[] buffer = new byte[client.ReceiveBufferSize];
 
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Reading data", NotificationMessageType.Debug);
+
                     int bytesRead = await nwStream.ReadAsync(buffer.AsMemory(0, client.ReceiveBufferSize));
 
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data read", NotificationMessageType.Debug);
+
                     string dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data: {dataReceived}", NotificationMessageType.Debug);
 
                     if (dataReceived.StartsWith("Download"))
                     {
@@ -129,13 +140,12 @@ internal class NetworkClient(FilesManager filesManager)
                     }
 
                     client.Close();
+
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Disconnected", NotificationMessageType.Debug);
                 }
                 catch (SocketException ex)
                 {
-                    if (ex.SocketErrorCode != SocketError.Interrupted)
-                    {
-                        throw;
-                    }
+                    ApiManager.SendNotificationMessageNewLine(ex.Message, NotificationMessageType.Log);
                 }
             }
             tcpListener.Stop();

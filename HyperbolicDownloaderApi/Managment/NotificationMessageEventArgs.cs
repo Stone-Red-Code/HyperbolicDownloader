@@ -10,6 +10,7 @@ public enum NotificationMessageType
 {
     Info,
     Log,
+    Debug,
     Success,
     Warning,
     Error

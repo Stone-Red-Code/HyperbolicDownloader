@@ -28,7 +28,9 @@ internal class InputHandler
         _ = commander.Register(clientCommands.ShowInfo, (HelpText)"Displays the private and public IP address.", "info", "inf");
         _ = commander.Register(hostCommands.Discover, (HelpText)"Tries to find other active hosts on the local network.", "discover", "disc");
         _ = commander.Register(hostCommands.Sync, (HelpText)"Syncs the host list", "sync");
-        _ = commander.Register(logCommands.Log, (HelpText)"Displays live log.", "log");
+
+        Command logCommand = commander.Register((_) => logCommands.Log(false), (HelpText)"Displays live log.", "log");
+        _ = logCommand.Register((_) => logCommands.Log(true), (HelpText)"Displays live log.", "debug");
 
         Command getCommand = commander.Register(downloadCommands.GetFile, (HelpText)"Attempts to retrieve a file from another host using a hash.", "get");
         _ = getCommand.Register(downloadCommands.GetFileFrom, (HelpText)"Attempts to retrieve a file from another host using a .hyper file.", "from");

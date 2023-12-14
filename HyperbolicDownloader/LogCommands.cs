@@ -8,9 +8,22 @@ namespace HyperbolicDownloader;
 
 internal class LogCommands
 {
-    public void Log(string _)
+    private bool debug = false;
+
+    public void Log(bool debug)
     {
+        this.debug = debug;
+
         Console.Clear();
+
+        if (debug)
+        {
+            Console.WriteLine("Debug log opened");
+        }
+        else
+        {
+            Console.WriteLine("Log opened");
+        }
 
         ApiManager.OnNotificationMessageRecived += OnNotificationMessageRecived;
 
@@ -34,7 +47,7 @@ internal class LogCommands
 
     private void OnNotificationMessageRecived(object? sender, NotificationMessageEventArgs e)
     {
-        if (e.NotificationMessageType == NotificationMessageType.Log)
+        if (e.NotificationMessageType == NotificationMessageType.Log || (debug && e.NotificationMessageType == NotificationMessageType.Debug))
         {
             lock (Console.Out)
             {
