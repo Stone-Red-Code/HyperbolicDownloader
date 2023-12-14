@@ -86,7 +86,7 @@ internal class NetworkClient(FilesManager filesManager)
         tcpListener.Start();
         IsListening = true;
 
-        _ = new TaskFactory().StartNew(async () =>
+        _ = new TaskFactory().StartNew(() =>
         {
             while (IsListening)
             {
@@ -94,68 +94,11 @@ internal class NetworkClient(FilesManager filesManager)
                 {
                     ApiManager.SendNotificationMessageNewLine("Listening for connections...", NotificationMessageType.Debug);
 
-                    TcpClient client = tcpListener.AcceptTcpClient();
+                    using TcpClient client = tcpListener.AcceptTcpClient();
 
                     ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Connected", NotificationMessageType.Debug);
 
-                    NetworkStream nwStream = client.GetStream();
-                    byte[] buffer = new byte[client.ReceiveBufferSize];
-
-                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Reading data", NotificationMessageType.Debug);
-
-                    int bytesRead = await nwStream.ReadAsync(buffer.AsMemory(0, client.ReceiveBufferSize));
-
-                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data read", NotificationMessageType.Debug);
-
-                    string dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data: {dataReceived}", NotificationMessageType.Debug);
-
-                    if (dataReceived.StartsWith("Download"))
-                    {
-                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Download request", NotificationMessageType.Debug);
-                        _ = Upload(client, dataReceived[8..]);
-                        continue;
-                    }
-                    if (string.IsNullOrWhiteSpace(dataReceived))
-                    {
-                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Disconnected", NotificationMessageType.Debug);
-                        client.Close();
-                        continue;
-                    }
-
-                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Deserializing data", NotificationMessageType.Debug);
-
-                    DataContainer? dataContainer = JsonSerializer.Deserialize<DataContainer>(dataReceived);
-
-                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data deserialized", NotificationMessageType.Debug);
-
-                    if (dataContainer is not null && events.TryGetValue(dataContainer.EventName, out (Type type, Delegate method) value))
-                    {
-                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Found event", NotificationMessageType.Debug);
-
-                        (Type type, Delegate method) = value;
-
-                        Type eventArgsType = typeof(MessageRecivedEventArgs<>).MakeGenericType(type);
-
-                        object? eventArgs = Activator.CreateInstance(
-                            eventArgsType,
-                            nwStream,
-                            (client.Client.RemoteEndPoint as IPEndPoint)?.Address,
-                            JsonSerializer.Deserialize(dataContainer.JsonData, type));
-
-                        _ = (method?.DynamicInvoke(this, eventArgs));
-                    }
-                    else
-                    {
-                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Event not found", NotificationMessageType.Debug);
-                    }
-
-                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Closing connection", NotificationMessageType.Debug);
-
-                    client.Close();
-
-                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Disconnected", NotificationMessageType.Debug);
+                    _ = Task.Run(() => HandleRequest(client));
                 }
                 catch (SocketException ex)
                 {
@@ -175,6 +118,66 @@ internal class NetworkClient(FilesManager filesManager)
     public void ListenTo<T>(string eventName, EventHandler<MessageRecivedEventArgs<T>> eventHandler)
     {
         events.Add(eventName, (typeof(T), eventHandler));
+    }
+
+    private async Task HandleRequest(TcpClient client)
+    {
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Handling request", NotificationMessageType.Debug);
+
+        NetworkStream nwStream = client.GetStream();
+        byte[] buffer = new byte[client.ReceiveBufferSize];
+
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Reading data", NotificationMessageType.Debug);
+
+        int bytesRead = await nwStream.ReadAsync(buffer.AsMemory(0, client.ReceiveBufferSize));
+
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data read", NotificationMessageType.Debug);
+
+        string dataReceived = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data: {dataReceived}", NotificationMessageType.Debug);
+
+        if (dataReceived.StartsWith("Download"))
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Download request", NotificationMessageType.Debug);
+            _ = Upload(client, dataReceived[8..]);
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(dataReceived))
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Disconnected", NotificationMessageType.Debug);
+            client.Close();
+            return;
+        }
+
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Deserializing data", NotificationMessageType.Debug);
+
+        DataContainer? dataContainer = JsonSerializer.Deserialize<DataContainer>(dataReceived);
+
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data deserialized", NotificationMessageType.Debug);
+
+        if (dataContainer is not null && events.TryGetValue(dataContainer.EventName, out (Type type, Delegate method) value))
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Found event", NotificationMessageType.Debug);
+
+            (Type type, Delegate method) = value;
+
+            Type eventArgsType = typeof(MessageRecivedEventArgs<>).MakeGenericType(type);
+
+            object? eventArgs = Activator.CreateInstance(
+                eventArgsType,
+                nwStream,
+                (client.Client.RemoteEndPoint as IPEndPoint)?.Address,
+                JsonSerializer.Deserialize(dataContainer.JsonData, type));
+
+            _ = (method?.DynamicInvoke(this, eventArgs));
+        }
+        else
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Event not found", NotificationMessageType.Debug);
+        }
+
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > End of request", NotificationMessageType.Debug);
     }
 
     private async Task Upload(TcpClient client, string hash)
