@@ -227,7 +227,13 @@ public class ApiManager
     {
         SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Requesting file list", NotificationMessageType.Log);
 
-        await recivedEventArgs.SendResponseAsync(FilesManager.ToList().Select(f => new HyperFileDto(f)).ToList());
+        List<HyperFileDto> files = FilesManager
+            .ToList()
+            .Select(f => new HyperFileDto(f))
+            .Where(f => f.Name.Contains(recivedEventArgs.Data))
+            .ToList();
+
+        await recivedEventArgs.SendResponseAsync(files);
     }
 
     private void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)

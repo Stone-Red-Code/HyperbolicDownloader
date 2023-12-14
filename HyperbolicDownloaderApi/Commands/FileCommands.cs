@@ -64,6 +64,7 @@ public class FileCommands
     public void ListFiles(string searchString)
     {
         int index = 0;
+        int fileCount = 0;
         List<PrivateHyperFileInfo> fileInfos = filesManager.ToList();
 
         if (fileInfos.Count == 0)
@@ -81,15 +82,35 @@ public class FileCommands
                 continue;
             }
 
+            fileCount++;
+
             ApiManager.SendNotificationMessageNewLine($"{index}) {fileInfo.FilePath}");
             ApiManager.SendNotificationMessageNewLine($"Hash: {fileInfo.Hash}");
             ApiManager.SendNotificationMessageNewLine(string.Empty);
         }
-        Console.CursorTop--;
+
+        if (fileCount == 0)
+        {
+            ApiManager.SendNotificationMessage($"No files found containing \"{searchString}\".", NotificationMessageType.Warning);
+        }
+        else
+        {
+            Console.CursorTop--;
+        }
     }
 
     public void ListFilesRemote(string args)
     {
+        args = args.Trim();
+
+        string searchString = string.Empty;
+
+        if (args.Contains(' '))
+        {
+            searchString = args.Substring(args.IndexOf(' ') + 1, args.Length - args.IndexOf(' ') - 1);
+            args = args[..args.IndexOf(' ')];
+        }
+
         if (int.TryParse(args, out int index))
         {
             List<NetworkSocket> hosts = hostsManager.ToList();
@@ -140,7 +161,7 @@ public class FileCommands
             return;
         }
 
-        Task<List<HyperFileDto>?> sendTask = NetworkClient.SendAsync<List<HyperFileDto>>(ipAddress, port, "GetFilesList", string.Empty);
+        Task<List<HyperFileDto>?> sendTask = NetworkClient.SendAsync<List<HyperFileDto>>(ipAddress, port, "GetFilesList", searchString);
 
         _ = sendTask.Wait(1000);
 
@@ -152,7 +173,11 @@ public class FileCommands
 
         List<HyperFileDto>? fileInfos = sendTask.Result;
 
-        if (fileInfos is null || fileInfos.Count == 0)
+        if (fileInfos?.Count == 0 && !string.IsNullOrEmpty(searchString))
+        {
+            ApiManager.SendNotificationMessageNewLine($"No files found containing \"{searchString}\".", NotificationMessageType.Warning);
+        }
+        else if (fileInfos is null || fileInfos.Count == 0)
         {
             ApiManager.SendNotificationMessageNewLine("No tracked files!", NotificationMessageType.Warning);
             return;
