@@ -90,6 +90,19 @@ public class FileCommands
 
     public void ListFilesRemote(string args)
     {
+        if (int.TryParse(args, out int index))
+        {
+            List<NetworkSocket> hosts = hostsManager.ToList();
+
+            if (index < 1 || index > hosts.Count)
+            {
+                ApiManager.SendNotificationMessageNewLine("Invalid index!", NotificationMessageType.Error);
+                return;
+            }
+
+            args = $"{hosts[index - 1].IPAddress}:{hosts[index - 1].Port}";
+        }
+
         string[] parts = args.Split(":");
 
         if (parts.Length != 2)
@@ -144,8 +157,6 @@ public class FileCommands
             ApiManager.SendNotificationMessageNewLine("No tracked files!", NotificationMessageType.Warning);
             return;
         }
-
-        int index = 0;
 
         foreach (HyperFileDto fileInfo in fileInfos)
         {
