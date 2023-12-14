@@ -82,6 +82,8 @@ public class DirectoryWatcher
 
         timer.Interval = TimeSpan.FromMinutes(1).TotalMilliseconds;
 
+        int newFilesCount = 0;
+
         foreach (string directory in directories)
         {
             ApiManager.SendNotificationMessageNewLine($"Checking directory: {directory}", NotificationMessageType.Log);
@@ -89,11 +91,14 @@ public class DirectoryWatcher
 
             foreach (string file in files)
             {
-                _ = filesManager.TryAdd(file, out _, out _);
+                if (filesManager.TryAdd(file, out _, out _))
+                {
+                    newFilesCount++;
+                }
             }
         }
 
-        ApiManager.SendNotificationMessageNewLine("Finished checking for new files.", NotificationMessageType.Log);
+        ApiManager.SendNotificationMessageNewLine($"Finished checking for new files. Found {newFilesCount} new files.", NotificationMessageType.Log);
 
         filesManager.RemoveFilesThatDontExist();
     }
