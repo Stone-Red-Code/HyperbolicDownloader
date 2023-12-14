@@ -152,9 +152,11 @@ public class DownloadCommands(HostsManager hostsManager, FilesManager filesManag
 
             int bytesPerSecond = 0;
             int transferRate = 0;
+            TimeSpan timeRemaining = TimeSpan.Zero;
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
+
             while (totalBytesRead < fileSize)
             {
                 try
@@ -180,11 +182,12 @@ public class DownloadCommands(HostsManager hostsManager, FilesManager filesManag
                 {
                     transferRate = bytesPerSecond;
                     host.DownloadSpeed = (host.DownloadSpeed + bytesPerSecond) / 2;
+                    timeRemaining = TimeSpan.FromSeconds((fileSize - totalBytesRead) / (double)host.DownloadSpeed);
                     bytesPerSecond = 0;
                     stopWatch.Restart();
                 }
 
-                ApiManager.SendNotificationMessage($"\rDownloading: {Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}% {UnitFormatter.FileSize(totalBytesRead)}/{UnitFormatter.FileSize(fileSize)} [{UnitFormatter.TransferRate(transferRate)}]      ");
+                ApiManager.SendNotificationMessage($"\rDownloading: [{Math.Clamp(Math.Ceiling(100d / fileSize * totalBytesRead), 0, 100)}%] [{UnitFormatter.FileSize(totalBytesRead)}/{UnitFormatter.FileSize(fileSize)}] [{UnitFormatter.TransferRate(transferRate)}] [ETA: {timeRemaining:hh\\:mm\\:ss}]      ");
             }
 
             fileStream.Close();
