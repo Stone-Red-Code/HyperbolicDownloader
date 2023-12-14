@@ -15,6 +15,7 @@ internal class LogCommands
         this.debug = debug;
 
         Console.Clear();
+        Console.BackgroundColor = ConsoleColor.Black;
 
         if (debug)
         {
@@ -41,6 +42,7 @@ internal class LogCommands
         ApiManager.OnNotificationMessageRecived -= OnNotificationMessageRecived;
 
         Console.Clear();
+        Console.ResetColor();
 
         Console.WriteLine("Log closed");
     }
@@ -53,7 +55,7 @@ internal class LogCommands
             {
                 if (e.Message?.Contains('>') == true && IPAddress.TryParse(e.Message[..e.Message.IndexOf('>')].Trim(), out IPAddress? ipAddress))
                 {
-                    ConsoleExt.Write($"[{DateTime.Now}] ", ConsoleColor.DarkGray);
+                    ConsoleExt.Write($"[{DateTime.Now}] ", ConsoleColor.Gray);
 
                     if (e.NotificationMessageType == NotificationMessageType.Debug)
                     {
@@ -86,7 +88,7 @@ internal class LogCommands
                 }
                 else
                 {
-                    ConsoleExt.Write($"[{DateTime.Now}] ", ConsoleColor.DarkGray);
+                    ConsoleExt.Write($"[{DateTime.Now}] ", ConsoleColor.Gray);
 
                     if (e.NotificationMessageType == NotificationMessageType.Debug)
                     {
