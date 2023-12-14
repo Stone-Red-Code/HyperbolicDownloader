@@ -113,19 +113,27 @@ internal class NetworkClient(FilesManager filesManager)
 
                     if (dataReceived.StartsWith("Download"))
                     {
+                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Download request", NotificationMessageType.Debug);
                         _ = Upload(client, dataReceived[8..]);
                         continue;
                     }
                     if (string.IsNullOrWhiteSpace(dataReceived))
                     {
+                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Disconnected", NotificationMessageType.Debug);
                         client.Close();
                         continue;
                     }
 
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Deserializing data", NotificationMessageType.Debug);
+
                     DataContainer? dataContainer = JsonSerializer.Deserialize<DataContainer>(dataReceived);
+
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Data deserialized", NotificationMessageType.Debug);
 
                     if (dataContainer is not null && events.TryGetValue(dataContainer.EventName, out (Type type, Delegate method) value))
                     {
+                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Found event", NotificationMessageType.Debug);
+
                         (Type type, Delegate method) = value;
 
                         Type eventArgsType = typeof(MessageRecivedEventArgs<>).MakeGenericType(type);
@@ -138,6 +146,12 @@ internal class NetworkClient(FilesManager filesManager)
 
                         _ = (method?.DynamicInvoke(this, eventArgs));
                     }
+                    else
+                    {
+                        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Event not found", NotificationMessageType.Debug);
+                    }
+
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Closing connection", NotificationMessageType.Debug);
 
                     client.Close();
 
