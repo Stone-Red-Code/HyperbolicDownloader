@@ -161,6 +161,8 @@ public class FileCommands
             return;
         }
 
+        ApiManager.SendNotificationMessageNewLine($"Requesting file list from {ipAddress}:{port}...");
+
         Task<List<HyperFileDto>?> sendTask = NetworkClient.SendAsync<List<HyperFileDto>>(ipAddress, port, "GetFilesList", searchString);
 
         _ = sendTask.Wait(1000);
@@ -182,6 +184,8 @@ public class FileCommands
             ApiManager.SendNotificationMessageNewLine("No tracked files!", NotificationMessageType.Warning);
             return;
         }
+
+        index = 0;
 
         foreach (HyperFileDto fileInfo in fileInfos)
         {
@@ -227,7 +231,7 @@ public class FileCommands
         string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
         string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
 
-        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(args);
+        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(localHyperFileInfo.Hash);
 
         NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
@@ -280,7 +284,7 @@ public class FileCommands
         string fileName = Path.GetFileName(localHyperFileInfo!.FilePath);
         string filePath = Path.Combine(directoryPath, $"{fileName}.hyper");
 
-        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(args);
+        PublicHyperFileInfo publicHyperFileInfo = new PublicHyperFileInfo(localHyperFileInfo.Hash);
 
         NetworkSocket? localHost = ApiManager.GetLocalSocket();
         if (localHost is null)
@@ -303,7 +307,7 @@ public class FileCommands
 
             Console.CursorLeft = 0;
 
-            Task<bool> sendTask = NetworkClient.SendAsync<bool>(ipAddress!, host.Port, "HasFile", args);
+            Task<bool> sendTask = NetworkClient.SendAsync<bool>(ipAddress!, host.Port, "HasFile", localHyperFileInfo.Hash);
 
             _ = sendTask.Wait(1000);
 

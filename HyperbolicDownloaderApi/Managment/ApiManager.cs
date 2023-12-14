@@ -21,10 +21,12 @@ public class ApiManager
     public static IPAddress? PublicIpAddress => device?.GetExternalIPAsync().GetAwaiter().GetResult();
     public FilesManager FilesManager { get; } = new();
     public HostsManager HostsManager { get; } = new();
+    public DirectoryWatcher DirectoryWatcher { get; }
 
     public ApiManager()
     {
         networkClient = new(FilesManager);
+        DirectoryWatcher = new(FilesManager);
     }
 
     public static NetworkSocket? GetLocalSocket()

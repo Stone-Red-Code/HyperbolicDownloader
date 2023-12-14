@@ -20,6 +20,11 @@ internal static class Program
 
         ApiManager.OnNotificationMessageRecived += ApiManager_OnNotificationMessageRecived;
 
+        if (!Directory.Exists(ApiConfiguration.BasePath))
+        {
+            _ = Directory.CreateDirectory(ApiConfiguration.BasePath);
+        }
+
         if (File.Exists(ApiConfiguration.HostsFilePath))
         {
             string hostsJson = await File.ReadAllTextAsync(ApiConfiguration.HostsFilePath);
@@ -32,11 +37,17 @@ internal static class Program
             apiManager.FilesManager.AddRange(JsonSerializer.Deserialize<List<PrivateHyperFileInfo>>(filesJson) ?? new());
         }
 
+        if (File.Exists(ApiConfiguration.DirectoriesInfoPath))
+        {
+            string directoriesJson = await File.ReadAllTextAsync(ApiConfiguration.DirectoriesInfoPath);
+            apiManager.DirectoryWatcher.AddRange(JsonSerializer.Deserialize<List<string>>(directoriesJson) ?? new());
+        }
+
         Console.WriteLine($"HyperbolicDownloader - {Assembly.GetExecutingAssembly().GetName().Version}");
         ConsoleExt.WriteLine("https://github.com/Stone-Red-Code/HyperbolicDownloader", ConsoleColor.Blue);
         Console.WriteLine();
 
-        InputHandler inputHandler = new InputHandler(apiManager.HostsManager, apiManager.FilesManager);
+        InputHandler inputHandler = new InputHandler(apiManager.HostsManager, apiManager.FilesManager, apiManager.DirectoryWatcher);
 
         if (args.Length > 0 && File.Exists(args[0]))
         {
@@ -58,6 +69,8 @@ internal static class Program
 
     private static async Task Initialize()
     {
+        apiManager.DirectoryWatcher.Start();
+
         Console.WriteLine("Searching for a UPnP/NAT-PMP device...");
         _ = await ApiManager.OpenPorts();
 

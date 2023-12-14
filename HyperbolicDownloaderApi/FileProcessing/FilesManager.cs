@@ -1,5 +1,6 @@
 ﻿using HyperbolicDownloaderApi.Managment;
 
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace HyperbolicDownloaderApi.FileProcessing;
@@ -31,8 +32,14 @@ public class FilesManager
         if (Contains(hash))
         {
             fileInfo = null;
+            Debug.WriteLine(filePath + "-.-" + hash);
             errorMessage = "File already tracked!";
             return false;
+        }
+
+        if (files.Exists(f => f.FilePath == fullPath))
+        {
+            _ = files.RemoveAll(f => f.FilePath == fullPath);
         }
 
         fileInfo = new PrivateHyperFileInfo(hash, fullPath);
@@ -89,6 +96,20 @@ public class FilesManager
     public List<PrivateHyperFileInfo> ToList()
     {
         return files.ToList();
+    }
+
+    internal void RemoveFilesThatDontExist()
+    {
+        List<PrivateHyperFileInfo> filesToRemove = files
+            .Where(f => !File.Exists(f.FilePath))
+            .ToList();
+
+        foreach (PrivateHyperFileInfo fileToRemove in filesToRemove)
+        {
+            _ = files.Remove(fileToRemove);
+        }
+
+        SaveFiles();
     }
 
     private void SaveFiles()

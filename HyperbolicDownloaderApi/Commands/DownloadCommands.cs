@@ -37,6 +37,7 @@ public class DownloadCommands
         if (!File.Exists(fullPath))
         {
             ApiManager.SendNotificationMessageNewLine("Invalid file path!", NotificationMessageType.Error);
+            return;
         }
 
         string json = File.ReadAllText(fullPath);
