@@ -16,6 +16,7 @@ internal class LogCommands
 
         Console.Clear();
         Console.BackgroundColor = ConsoleColor.Black;
+        Console.ForegroundColor = ConsoleColor.White;
 
         if (debug)
         {
