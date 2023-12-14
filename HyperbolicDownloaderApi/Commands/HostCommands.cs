@@ -19,7 +19,16 @@ public class HostCommands(HostsManager hostsManager)
         BroadcastClient.Send(ApiConfiguration.BroadcastPort, ApiConfiguration.PrivatePort.ToString());
         Thread.Sleep(3000);
 
-        ApiManager.SendNotificationMessageNewLine($"Found {hostsManager.Count - hostsCountBefore} host(s)", NotificationMessageType.Info);
+        int newHostsCount = hostsManager.Count - hostsCountBefore;
+
+        if (newHostsCount > 0)
+        {
+            ApiManager.SendNotificationMessageNewLine($"Found {newHostsCount} host(s).", NotificationMessageType.Info);
+        }
+        else
+        {
+            ApiManager.SendNotificationMessageNewLine($"No new hosts added.", NotificationMessageType.Warning);
+        }
     }
 
     public void CheckActiveHosts(string _)
@@ -43,7 +52,7 @@ public class HostCommands(HostsManager hostsManager)
 
         if (hosts.Count == 0)
         {
-            ApiManager.SendNotificationMessageNewLine("No known hosts", NotificationMessageType.Warning);
+            ApiManager.SendNotificationMessageNewLine("No known hosts.", NotificationMessageType.Warning);
             return;
         }
 
@@ -102,7 +111,7 @@ public class HostCommands(HostsManager hostsManager)
 
         if (!hostsManager.Contains(hostToRemove))
         {
-            ApiManager.SendNotificationMessageNewLine("Host not in list", NotificationMessageType.Error);
+            ApiManager.SendNotificationMessageNewLine("Host not in list!", NotificationMessageType.Error);
             return;
         }
 
