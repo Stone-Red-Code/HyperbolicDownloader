@@ -15,8 +15,6 @@ internal class LogCommands
         this.debug = debug;
 
         Console.Clear();
-        Console.BackgroundColor = ConsoleColor.Black;
-        Console.ForegroundColor = ConsoleColor.White;
 
         if (debug)
         {
@@ -85,7 +83,7 @@ internal class LogCommands
                     };
 
                     ConsoleExt.Write(e.Message[..e.Message.IndexOf('>')], consoleColor);
-                    ConsoleExt.Write(e.Message[e.Message.IndexOf('>')..], ConsoleColor.White);
+                    Console.Write(e.Message[e.Message.IndexOf('>')..]);
                 }
                 else
                 {
@@ -96,7 +94,7 @@ internal class LogCommands
                         ConsoleExt.Write("[DEBUG] ", ConsoleColor.DarkYellow);
                     }
 
-                    ConsoleExt.Write(e.Message, ConsoleColor.White);
+                    Console.Write(e.Message);
                 }
             }
         }
