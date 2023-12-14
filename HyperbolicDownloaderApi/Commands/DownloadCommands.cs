@@ -187,8 +187,8 @@ public class DownloadCommands
                 if (stopWatch.Elapsed.TotalSeconds >= 1)
                 {
                     transferRate = bytesPerSecond;
-                    bytesPerSecond = 0;
                     host.DownloadSpeed = (host.DownloadSpeed + bytesPerSecond) / 2;
+                    bytesPerSecond = 0;
                     stopWatch.Restart();
                 }
 
