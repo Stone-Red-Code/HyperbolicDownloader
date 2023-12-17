@@ -53,12 +53,15 @@ internal static class Program
         {
             HyperbolicDownloaderApi.Commands.DownloadCommands downloadCommands = new HyperbolicDownloaderApi.Commands.DownloadCommands(apiManager.HostsManager, apiManager.FilesManager);
             downloadCommands.GetFileFrom(args[0]);
-            Console.WriteLine("Do you want to continue using this instance? [y/N]");
-            if (char.ToLower(Console.ReadKey().KeyChar) != 'y')
-            {
-                return;
-            }
+            _ = Console.ReadLine();
+            return;
+        }
+        else if (args.Length > 0)
+        {
+            ConsoleExt.WriteLine("Warning! You are using command line arguments, which can lead to unexpected behavior with some commands.", ConsoleColor.Yellow);
             Console.WriteLine();
+            inputHandler.ExecuteInput(string.Join(' ', args));
+            return;
         }
 
         await Initialize();

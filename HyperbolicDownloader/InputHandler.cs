@@ -22,7 +22,7 @@ internal class InputHandler
         ClientCommands clientCommands = new ClientCommands();
         LogCommands logCommands = new LogCommands();
 
-        _ = commander.Register(input => commander.PrintHelp(input), "help");
+        _ = commander.Register(input => commander.PrintHelp(input), (HelpText)"Lists all commands.", "help", "h", "?");
         _ = commander.Register(_ => Console.Clear(), (HelpText)"Clears the console.", "clear", "cls");
         _ = commander.Register(_ => exit = true, (HelpText)"Exits the application.", "exit", "quit");
         _ = commander.Register(clientCommands.ShowInfo, (HelpText)"Displays the private and public IP address.", "info", "inf");
@@ -66,19 +66,23 @@ internal class InputHandler
             Console.CursorVisible = true;
 
             string input = Console.ReadLine()?.Trim() ?? string.Empty;
+            ExecuteInput(input);
+        }
+    }
 
-            Console.CursorVisible = false;
-            try
+    public void ExecuteInput(string input)
+    {
+        Console.CursorVisible = false;
+        try
+        {
+            if (!commander.Execute(input, out _))
             {
-                if (!commander.Execute(input, out _))
-                {
-                    ConsoleExt.WriteLine("Unknown command!", ConsoleColor.Red);
-                }
+                ConsoleExt.WriteLine("Unknown command! Use `help` to list all commands.", ConsoleColor.Red);
             }
-            catch (Exception ex)
-            {
-                ConsoleExt.WriteLine($"An unexpected error occurred! {ex}", ConsoleColor.Red);
-            }
+        }
+        catch (Exception ex)
+        {
+            ConsoleExt.WriteLine($"An unexpected error occurred! {ex}", ConsoleColor.Red);
         }
     }
 }
