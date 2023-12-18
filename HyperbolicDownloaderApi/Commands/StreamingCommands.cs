@@ -181,6 +181,12 @@ public class StreamingCommands(HostsManager hostsManager)
                     try
                     {
                         bytesRead = nwStream.Read(reciveBuffer, 0, reciveBuffer.Length);
+
+                        if (bytesRead == 0 && bufferedWaveProvider.BufferedBytes == 0)
+                        {
+                            player.Stop();
+                            ApiManager.SendNotificationMessage($"\r[{player.PlaybackState,-7}]");
+                        }
                     }
                     catch (IOException ex)
                     {
