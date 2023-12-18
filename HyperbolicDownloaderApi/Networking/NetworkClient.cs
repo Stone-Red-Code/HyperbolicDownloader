@@ -198,11 +198,14 @@ internal class NetworkClient(FilesManager filesManager)
     {
         try
         {
-            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Requesting file download [{hash}]", NotificationMessageType.Log);
             byte[] bytesToSend;
             hash = hash.Trim();
+
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Requesting file download [{hash}]", NotificationMessageType.Log);
+
             NetworkStream nwStream = client.GetStream();
             client.SendBufferSize = 64000;
+
             if (filesManager.TryGet(hash, out PrivateHyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
             {
                 ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Accepting file download [{Path.GetFileName(hyperFileInfo.FilePath)}] [{hash}]", NotificationMessageType.Log);
@@ -248,11 +251,13 @@ internal class NetworkClient(FilesManager filesManager)
     {
         try
         {
-            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Requesting file stream [{hash}]", NotificationMessageType.Log);
             byte[] bytesToSend;
             hash = hash.Trim();
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Requesting file stream [{hash}]", NotificationMessageType.Log);
+
             NetworkStream nwStream = client.GetStream();
             client.SendBufferSize = 6400;
+
             if (filesManager.TryGet(hash, out PrivateHyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
             {
                 ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Accepting file stream [{Path.GetFileName(hyperFileInfo.FilePath)}] [{hash}]", NotificationMessageType.Log);
