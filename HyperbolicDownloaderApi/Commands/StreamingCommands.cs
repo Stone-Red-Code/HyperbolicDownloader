@@ -156,6 +156,7 @@ public class StreamingCommands(HostsManager hostsManager)
 
             ApiManager.SendNotificationMessageNewLine($"File name: {fileName}");
             ApiManager.SendNotificationMessageNewLine($"Starting stream...");
+            ApiManager.SendNotificationMessageNewLine("Controls: [p]lay, [s]top");
 
             BufferedWaveProvider bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(sampleRate, bitsPerSample, channels));
             using WaveOutEvent player = new WaveOutEvent();

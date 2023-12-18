@@ -257,7 +257,21 @@ internal class NetworkClient(FilesManager filesManager)
             {
                 ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Accepting file stream [{Path.GetFileName(hyperFileInfo.FilePath)}] [{hash}]", NotificationMessageType.Log);
 
-                using WaveFileReader reader = new WaveFileReader(hyperFileInfo.FilePath);
+                WaveFileReader reader;
+
+                try
+                {
+                    reader = new WaveFileReader(hyperFileInfo.FilePath);
+                }
+                catch (FormatException ex)
+                {
+                    ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Error streaming file {ex.Message} [{hash}]", NotificationMessageType.Log);
+                    Debug.WriteLine(ex);
+                    bytesToSend = Encoding.ASCII.GetBytes("Invalid file format!");
+                    await nwStream.WriteAsync(bytesToSend);
+
+                    return;
+                }
 
                 bytesToSend = Encoding.ASCII.GetBytes($"{reader.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}/{reader.WaveFormat.SampleRate}/{reader.WaveFormat.BitsPerSample}/{reader.WaveFormat.Channels}");
 
@@ -274,6 +288,8 @@ internal class NetworkClient(FilesManager filesManager)
                 }
 
                 ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Completed stream of file [{Path.GetFileName(hyperFileInfo.FilePath)}] [{hash}]", NotificationMessageType.Log);
+
+                reader.Close();
             }
             else
             {
