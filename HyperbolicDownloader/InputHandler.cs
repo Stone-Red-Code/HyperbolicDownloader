@@ -19,6 +19,8 @@ internal class InputHandler
         FileCommands fileCommands = new FileCommands(hostsManager, filesManager);
         DirectoryCommands directoryCommands = new DirectoryCommands(directoryWatcher);
         DownloadCommands downloadCommands = new DownloadCommands(hostsManager, filesManager);
+        StreamingCommands streamingCommands = new StreamingCommands(hostsManager);
+
         ClientCommands clientCommands = new ClientCommands();
         LogCommands logCommands = new LogCommands();
 
@@ -34,6 +36,9 @@ internal class InputHandler
 
         Command getCommand = commander.Register(downloadCommands.GetFile, (HelpText)"Attempts to retrieve a file from another host using a hash.", "get");
         _ = getCommand.Register(downloadCommands.GetFileFrom, (HelpText)"Attempts to retrieve a file from another host using a .hyper file.", "from");
+
+        Command streamCommand = commander.Register(streamingCommands.StreamWav, (HelpText)"Attempts to stream a .wav file from another host using a hash.", "stream");
+        _ = streamCommand.Register(streamingCommands.GetWavStreamFrom, (HelpText)"Attempts to stream a .wav file from another host using a .hyper file.", "from");
 
         Command generateCommad = commander.Register(fileCommands.GenerateFileFull, (HelpText)"Generates a .hyper file from a file hash.", "generate", "gen");
         _ = generateCommad.Register(fileCommands.GenerateFileSingle, (HelpText)"Generates a .hyper file from a file hash without checking the known hosts. This adds only the local host to the file.", "noscan");

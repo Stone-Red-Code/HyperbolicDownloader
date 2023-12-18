@@ -141,7 +141,6 @@ public class DownloadCommands(HostsManager hostsManager, FilesManager filesManag
             ApiManager.SendNotificationMessageNewLine($"File name: {fileName}");
             ApiManager.SendNotificationMessageNewLine($"Starting download...");
 
-            int totalBytesRead = 0;
 
             if (!Directory.Exists(directoryPath))
             {
@@ -150,6 +149,7 @@ public class DownloadCommands(HostsManager hostsManager, FilesManager filesManag
 
             using FileStream? fileStream = new FileStream(filePath, FileMode.Create);
 
+            int totalBytesRead = 0;
             int bytesPerSecond = 0;
             int transferRate = 0;
             TimeSpan timeRemaining = TimeSpan.Zero;

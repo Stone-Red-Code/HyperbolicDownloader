@@ -1,6 +1,8 @@
 ﻿using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Managment;
 
+using NAudio.Wave;
+
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -143,6 +145,14 @@ internal class NetworkClient(FilesManager filesManager)
             _ = Upload(client, dataReceived[8..]);
             return;
         }
+
+        if (dataReceived.StartsWith("StreamWav"))
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Download request", NotificationMessageType.Debug);
+            _ = StreamWav(client, dataReceived[9..]);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(dataReceived))
         {
             ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Disconnected", NotificationMessageType.Debug);
@@ -181,7 +191,7 @@ internal class NetworkClient(FilesManager filesManager)
 
         client.Close();
 
-        ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Connection closed", NotificationMessageType.Debug);
+        ApiManager.SendNotificationMessageNewLine($"{(client.Client?.RemoteEndPoint as IPEndPoint)?.Address} > Connection closed", NotificationMessageType.Debug);
     }
 
     private async Task Upload(TcpClient client, string hash)
@@ -200,8 +210,6 @@ internal class NetworkClient(FilesManager filesManager)
                 FileInfo fileInfo = new FileInfo(hyperFileInfo.FilePath);
 
                 bytesToSend = Encoding.ASCII.GetBytes($"{fileInfo.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}");
-
-                Array.Resize(ref bytesToSend, 1000);
 
                 await nwStream.WriteAsync(bytesToSend);
 
@@ -232,7 +240,60 @@ internal class NetworkClient(FilesManager filesManager)
 
             client.Close();
 
-            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Connection closed", NotificationMessageType.Debug);
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client?.RemoteEndPoint as IPEndPoint)?.Address} > Connection closed", NotificationMessageType.Debug);
+        }
+    }
+
+    private async Task StreamWav(TcpClient client, string hash)
+    {
+        try
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Requesting file stream [{hash}]", NotificationMessageType.Log);
+            byte[] bytesToSend;
+            hash = hash.Trim();
+            NetworkStream nwStream = client.GetStream();
+            client.SendBufferSize = 6400;
+            if (filesManager.TryGet(hash, out PrivateHyperFileInfo? hyperFileInfo) && File.Exists(hyperFileInfo?.FilePath))
+            {
+                ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Accepting file stream [{Path.GetFileName(hyperFileInfo.FilePath)}] [{hash}]", NotificationMessageType.Log);
+
+                using WaveFileReader reader = new WaveFileReader(hyperFileInfo.FilePath);
+
+                bytesToSend = Encoding.ASCII.GetBytes($"{reader.Length}/{Path.GetFileName(hyperFileInfo.FilePath)}/{reader.WaveFormat.SampleRate}/{reader.WaveFormat.BitsPerSample}/{reader.WaveFormat.Channels}");
+
+                await nwStream.WriteAsync(bytesToSend);
+
+                ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Starting file stream of file [{Path.GetFileName(hyperFileInfo.FilePath)}] [{hash}]", NotificationMessageType.Log);
+
+                byte[]? buffer = new byte[64000];
+
+                while (reader.Position < reader.Length)
+                {
+                    int bytesRead = reader.Read(buffer, 0, 6400);
+                    await nwStream.WriteAsync(buffer.AsMemory(0, bytesRead));
+                }
+
+                ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Completed stream of file [{Path.GetFileName(hyperFileInfo.FilePath)}] [{hash}]", NotificationMessageType.Log);
+            }
+            else
+            {
+                bytesToSend = Encoding.ASCII.GetBytes("File not found!");
+                ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > File not found [{hash}]", NotificationMessageType.Log);
+                await nwStream.WriteAsync(bytesToSend);
+            }
+        }
+        catch (Exception ex)
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Error streaming file {ex.Message} [{hash}]", NotificationMessageType.Log);
+            Debug.WriteLine(ex);
+        }
+        finally
+        {
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client.RemoteEndPoint as IPEndPoint)?.Address} > Closing connection", NotificationMessageType.Debug);
+
+            client.Close();
+
+            ApiManager.SendNotificationMessageNewLine($"{(client.Client?.RemoteEndPoint as IPEndPoint)?.Address} > Connection closed", NotificationMessageType.Debug);
         }
     }
 }
