@@ -32,9 +32,23 @@ internal class NetworkClient(FilesManager filesManager)
 
         await nwStream.WriteAsync(bytesToSend);
 
+        List<byte> bytes = [];
+
         byte[] bytesToRead = new byte[client.ReceiveBufferSize];
-        int bytesRead = await nwStream.ReadAsync(bytesToRead.AsMemory(0, client.ReceiveBufferSize));
-        string response = Encoding.ASCII.GetString(bytesToRead, 0, bytesRead);
+
+        while (nwStream.CanRead)
+        {
+            int bytesRead = await nwStream.ReadAsync(bytesToRead.AsMemory(0, client.ReceiveBufferSize));
+
+            if (bytesRead == 0)
+            {
+                break;
+            }
+
+            bytes.AddRange(bytesToRead.AsMemory(0, bytesRead).ToArray());
+        }
+
+        string response = Encoding.ASCII.GetString(bytes.ToArray());
 
         client.Close();
 
