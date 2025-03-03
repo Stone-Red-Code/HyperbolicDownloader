@@ -197,11 +197,7 @@ public class HostCommands(HostsManager hostsManager)
                 ApiManager.SendNotificationMessageNewLine($"Invalid response!", NotificationMessageType.Error);
             }
         }
-        catch (SocketException ex)
-        {
-            ApiManager.SendNotificationMessageNewLine($"Invalid host! Error message: {ex.Message}", NotificationMessageType.Error);
-        }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is SocketException or IOException or AggregateException)
         {
             ApiManager.SendNotificationMessageNewLine($"Invalid host! Error message: {ex.Message}", NotificationMessageType.Error);
         }
