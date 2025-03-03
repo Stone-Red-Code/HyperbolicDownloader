@@ -1,16 +1,16 @@
-﻿using Commander_Net;
+﻿using Commander;
+
+using CuteUtils.Misc;
 
 using HyperbolicDownloaderApi.Commands;
 using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Networking;
 
-using Stone_Red_Utilities.ConsoleExtentions;
-
 namespace HyperbolicDownloader;
 
 internal class InputHandler
 {
-    private readonly Commander commander = new Commander();
+    private readonly Commander.Commander commander = new Commander.Commander();
     private bool exit = false;
 
     public InputHandler(HostsManager hostsManager, FilesManager filesManager, DirectoryWatcher directoryWatcher)
@@ -37,8 +37,8 @@ internal class InputHandler
         Command getCommand = commander.Register(downloadCommands.GetFile, (HelpText)"Attempts to retrieve a file from another host using a hash.", "get");
         _ = getCommand.Register(downloadCommands.GetFileFrom, (HelpText)"Attempts to retrieve a file from another host using a .hyper file.", "from");
 
-        Command streamCommand = commander.Register(streamingCommands.StreamWav, (HelpText)"Attempts to stream a .wav file from another host using a hash.", "stream");
-        _ = streamCommand.Register(streamingCommands.GetWavStreamFrom, (HelpText)"Attempts to stream a .wav file from another host using a .hyper file.", "from");
+        Command streamCommand = commander.Register(streamingCommands.StreamWav, (HelpText)"(EXPERIMENTAL) Attempts to stream a .wav file from another host using a hash.", "stream");
+        _ = streamCommand.Register(streamingCommands.GetWavStreamFrom, (HelpText)"(EXPERIMENTAL) Attempts to stream a .wav file from another host using a .hyper file.", "from");
 
         Command generateCommad = commander.Register(fileCommands.GenerateFileFull, (HelpText)"Generates a .hyper file from a file hash.", "generate", "gen");
         _ = generateCommad.Register(fileCommands.GenerateFileSingle, (HelpText)"Generates a .hyper file from a file hash without checking the known hosts. This adds only the local host to the file.", "noscan");

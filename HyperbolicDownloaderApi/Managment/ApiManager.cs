@@ -1,7 +1,7 @@
 ﻿using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Networking;
 
-using Open.Nat;
+using SharpOpenNat;
 
 using System.Diagnostics;
 using System.Net;
@@ -14,7 +14,7 @@ public class ApiManager
     public static event EventHandler<NotificationMessageEventArgs>? OnNotificationMessageRecived;
 
     private static readonly Random random = new();
-    private static NatDevice? device;
+    private static INatDevice? device;
     private static Mapping? portMapping;
     private readonly BroadcastClient broadcastClient = new BroadcastClient();
     private readonly NetworkClient networkClient;
@@ -59,8 +59,7 @@ public class ApiManager
         {
             ApiConfiguration.PublicPort = random.Next(1000, 6000);
 
-            NatDiscoverer? discoverer = new NatDiscoverer();
-            device = await discoverer.DiscoverDeviceAsync();
+            device = await OpenNat.Discoverer.DiscoverDeviceAsync();
 
             IPAddress? ip = await device.GetExternalIPAsync();
             SendNotificationMessageNewLine($"The public IP address is: {ip} ", NotificationMessageType.Success);
@@ -92,7 +91,7 @@ public class ApiManager
     public static void ClosePorts()
     {
         SendNotificationMessageNewLine("Closing ports...", NotificationMessageType.Info);
-        if (device is not null)
+        if (device is not null && portMapping is not null)
         {
             try
             {
@@ -151,6 +150,11 @@ public class ApiManager
     internal static void SendNotificationMessageNewLine(string message, NotificationMessageType messageType = NotificationMessageType.Info)
     {
         OnNotificationMessageRecived?.Invoke(null, new NotificationMessageEventArgs(messageType, message + Environment.NewLine));
+    }
+
+    private static void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
+    {
+        SendNotificationMessageNewLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.", NotificationMessageType.Info);
     }
 
     private async void BroadcastClient_OnBroadcastRecived(object? sender, BroadcastRecivedEventArgs recivedEventArgs)
@@ -229,17 +233,11 @@ public class ApiManager
     {
         SendNotificationMessageNewLine($"{recivedEventArgs.IpAddress} > Requesting file list", NotificationMessageType.Log);
 
-        List<HyperFileDto> files = FilesManager
+        List<HyperFileDto> files = [.. FilesManager
             .ToList()
             .Select(f => new HyperFileDto(f))
-            .Where(f => f.Name.Contains(recivedEventArgs.Data))
-            .ToList();
+            .Where(f => f.Name.Contains(recivedEventArgs.Data))];
 
         await recivedEventArgs.SendResponseAsync(files);
-    }
-
-    private void ReciveMessage(object? sender, MessageRecivedEventArgs<string> recivedEventArgs)
-    {
-        SendNotificationMessageNewLine($"Received \"{recivedEventArgs.Data}\" from {recivedEventArgs.IpAddress}.", NotificationMessageType.Info);
     }
 }

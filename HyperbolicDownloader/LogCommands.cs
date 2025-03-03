@@ -1,6 +1,6 @@
-﻿using HyperbolicDownloaderApi.Managment;
+﻿using CuteUtils.Misc;
 
-using Stone_Red_Utilities.ConsoleExtentions;
+using HyperbolicDownloaderApi.Managment;
 
 using System.Net;
 

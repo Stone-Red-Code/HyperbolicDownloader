@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CuteUtils" Version="1.0.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
-    <PackageReference Include="Open.Nat" Version="2.1.0" />
-    <PackageReference Include="Stone_Red-C-Sharp-Utilities" Version="1.0.3.1" />
+    <PackageReference Include="SharpOpenNat" Version="4.0.17" />
   </ItemGroup>
 
 </Project>

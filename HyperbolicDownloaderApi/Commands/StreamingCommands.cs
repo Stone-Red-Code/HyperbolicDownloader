@@ -1,11 +1,11 @@
-﻿using HyperbolicDownloaderApi.FileProcessing;
+﻿using CuteUtils;
+
+using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
 
 using NAudio.Utils;
 using NAudio.Wave;
-
-using Stone_Red_Utilities.StringExtentions;
 
 using System.Diagnostics;
 using System.Net;
@@ -238,9 +238,9 @@ public class StreamingCommands(HostsManager hostsManager)
         hostsManager.SaveHosts();
     }
 
-    private bool IsBufferNearlyFull(BufferedWaveProvider bufferedWaveProvider)
+    private static bool IsBufferNearlyFull(BufferedWaveProvider bufferedWaveProvider)
     {
-        return bufferedWaveProvider != null &&
+        return bufferedWaveProvider is not null &&
                bufferedWaveProvider.BufferLength - bufferedWaveProvider.BufferedBytes
                < bufferedWaveProvider.WaveFormat.AverageBytesPerSecond / 4;
     }

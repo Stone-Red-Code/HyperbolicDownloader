@@ -1,9 +1,9 @@
-﻿using HyperbolicDownloaderApi.FileProcessing;
+﻿using CuteUtils;
+
+using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
 using HyperbolicDownloaderApi.Utilities;
-
-using Stone_Red_Utilities.StringExtentions;
 
 using System.Diagnostics;
 using System.Net;
@@ -140,7 +140,6 @@ public class DownloadCommands(HostsManager hostsManager, FilesManager filesManag
 
             ApiManager.SendNotificationMessageNewLine($"File name: {fileName}");
             ApiManager.SendNotificationMessageNewLine($"Starting download...");
-
 
             if (!Directory.Exists(directoryPath))
             {

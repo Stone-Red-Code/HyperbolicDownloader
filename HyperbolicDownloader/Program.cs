@@ -1,8 +1,8 @@
-﻿using HyperbolicDownloaderApi.FileProcessing;
+﻿using CuteUtils.Misc;
+
+using HyperbolicDownloaderApi.FileProcessing;
 using HyperbolicDownloaderApi.Managment;
 using HyperbolicDownloaderApi.Networking;
-
-using Stone_Red_Utilities.ConsoleExtentions;
 
 using System.Reflection;
 using System.Text.Json;
